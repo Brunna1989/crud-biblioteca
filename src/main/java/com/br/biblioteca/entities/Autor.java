@@ -6,7 +6,7 @@ import lombok.*;
 
 @Entity
 @Table(name = "autores", uniqueConstraints = {
-        @UniqueConstraint(columnNames = "cpf") // Garante CPF único no banco
+        @UniqueConstraint(columnNames = "cpf")
 })
 @Data
 @NoArgsConstructor

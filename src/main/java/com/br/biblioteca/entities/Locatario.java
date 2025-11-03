@@ -2,15 +2,20 @@ package com.br.biblioteca.entities;
 
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Entity
 @Table(name = "nome", uniqueConstraints = {
-        @UniqueConstraint(columnNames = "telefone") // Garante a não repetição do telefone
+        @UniqueConstraint(columnNames = "telefone")
+
 })
 @Data
 @NoArgsConstructor
@@ -25,11 +30,25 @@ public class Locatario {
     @NotBlank(message = "O nome é obrigatório")
     private String nome;
 
+    @Column(nullable = true, length = 10)
     private String sexo;
 
     @NotBlank(message = "O telefone é obrigatório")
     @Column(nullable = false, unique = true)
     private String telefone;
+
+    @NotBlank(message = "O e-mail é obrigatório")
+    @Email(message = "E-mail deve ser válido")
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @NotNull(message = "A data de nascimento é obrigatória")
+    @Column(name = "data_nascimento", nullable = false)
+    private LocalDate dataNascimento;
+
+    @NotBlank(message = "O CPF é obrigatório")
+    @Column(nullable = false, unique = true, length = 14)
+    private String cpf;
 
 
 }
