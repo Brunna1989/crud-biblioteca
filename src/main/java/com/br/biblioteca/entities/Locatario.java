@@ -11,6 +11,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Table(name = "nome", uniqueConstraints = {
@@ -49,6 +50,9 @@ public class Locatario {
     @NotBlank(message = "O CPF é obrigatório")
     @Column(nullable = false, unique = true, length = 14)
     private String cpf;
+
+    @OneToMany(mappedBy = "locatario")
+    private List<Aluguel> alugueis;
 
 
 }

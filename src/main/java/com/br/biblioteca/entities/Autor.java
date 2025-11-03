@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
+import java.util.List;
+
 @Entity
 @Table(name = "autores", uniqueConstraints = {
         @UniqueConstraint(columnNames = "cpf")
@@ -29,4 +31,8 @@ public class Autor {
     @NotBlank(message = "O CPF é obrigatório")
     @Column(nullable = false, unique = true)
     private String cpf;
+
+    @ManyToMany(mappedBy = "autores")
+    private List<Livro> livros;
 }
+
