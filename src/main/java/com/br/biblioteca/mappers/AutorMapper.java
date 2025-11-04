@@ -53,10 +53,4 @@ public class AutorMapper {
                 .cpf(dto.getCpf())
                 .build();
     }
-
-
-    public Autor toEntityWithId(Long id) {
-        if (id == null) return null;
-        return Autor.builder().id(id).build();
-    }
 }

@@ -67,8 +67,4 @@ public class LivroMapper {
                 .build();
     }
 
-    public Livro toEntityWithId(Long id) {
-        if (id == null) return null;
-        return Livro.builder().id(id).build();
-    }
 }

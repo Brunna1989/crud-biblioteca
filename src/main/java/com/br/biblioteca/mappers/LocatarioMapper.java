@@ -45,9 +45,4 @@ public class LocatarioMapper {
                 .cpf(dto.getCpf())
                 .build();
     }
-
-    public Locatario toEntityWithId(Long id) {
-        if (id == null) return null;
-        return Locatario.builder().id(id).build();
-    }
 }

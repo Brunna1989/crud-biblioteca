@@ -28,7 +28,7 @@ public class AluguelMapper {
         List<LivroDTO> livros = aluguel.getLivros() == null
                 ? Collections.emptyList()
                 : aluguel.getLivros().stream()
-                .map(livroMapper::toDtoShallow) // evita ciclos
+                .map(livroMapper::toDtoShallow)
                 .collect(Collectors.toList());
 
         Long locatarioId = aluguel.getLocatario() == null ? null : aluguel.getLocatario().getId();
@@ -42,25 +42,4 @@ public class AluguelMapper {
                 .build();
     }
 
-    public Aluguel toEntity(AluguelDTO dto) {
-        if (dto == null) return null;
-
-        List<Livro> livros = dto.getLivros() == null
-                ? null
-                : dto.getLivros().stream()
-                .map(lDto -> Livro.builder().id(lDto.getId()).build())
-                .collect(Collectors.toList());
-
-        Locatario locatario = dto.getLocatarioId() == null
-                ? null
-                : Locatario.builder().id(dto.getLocatarioId()).build();
-
-        return Aluguel.builder()
-                .id(dto.getId())
-                .dataRetirada(dto.getDataRetirada())
-                .dataDevolucao(dto.getDataDevolucao())
-                .locatario(locatario)
-                .livros(livros)
-                .build();
-    }
 }
