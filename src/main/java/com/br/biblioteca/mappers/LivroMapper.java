@@ -3,7 +3,6 @@ package com.br.biblioteca.mappers;
 import com.br.biblioteca.dtos.LivroDTO;
 import com.br.biblioteca.dtos.AutorDTO;
 import com.br.biblioteca.entities.Livro;
-import com.br.biblioteca.entities.Autor;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -25,7 +24,7 @@ public class LivroMapper {
         List<AutorDTO> autores = livro.getAutores() == null
                 ? Collections.emptyList()
                 : livro.getAutores().stream()
-                .map(autorMapper::toDtoShallow) // evita ciclos
+                .map(autorMapper::toDtoShallow)
                 .collect(Collectors.toList());
 
         return LivroDTO.builder()
@@ -37,24 +36,17 @@ public class LivroMapper {
                 .build();
     }
 
+
     public Livro toEntity(LivroDTO dto) {
         if (dto == null) return null;
-
-        List<Autor> autores = dto.getAutores() == null
-                ? null
-                : dto.getAutores().stream()
-                .map(aDto -> Autor.builder().id(aDto.getId()).build()) // apenas id para assoc.
-                .collect(Collectors.toList());
 
         return Livro.builder()
                 .id(dto.getId())
                 .nome(dto.getNome())
                 .isbn(dto.getIsbn())
                 .dataPublicacao(dto.getDataPublicacao())
-                .autores(autores)
                 .build();
     }
-
 
     public LivroDTO toDtoShallow(Livro livro) {
         if (livro == null) return null;

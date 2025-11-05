@@ -30,7 +30,6 @@ public class AutorMapper {
                 .build();
     }
 
-
     public AutorDTO toDtoShallow(Autor autor) {
         if (autor == null) return null;
         return AutorDTO.builder()

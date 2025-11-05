@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -35,5 +36,6 @@ public class Aluguel {
             joinColumns = @JoinColumn(name = "aluguel_id"),
             inverseJoinColumns = @JoinColumn(name = "livro_id")
     )
-    private List<Livro> livros;
+    @Builder.Default
+    private List<Livro> livros = new ArrayList<>();
 }
