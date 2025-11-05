@@ -28,7 +28,7 @@ public class AluguelService {
     private final LocatarioMapper locatarioMapper;
     private final AluguelMapper aluguelMapper;
 
-    // --- AUTOR ---
+
     public AutorDTO criarAutor(AutorDTO dto) {
         Autor autor = autorMapper.toEntity(dto);
         Autor salvo = autorRepository.save(autor);
@@ -69,7 +69,6 @@ public class AluguelService {
         autorRepository.delete(autor);
     }
 
-    // --- LIVRO ---
     public LivroDTO criarLivroComNovosAutores(LivroDTO dto) {
         Livro livro = livroMapper.toEntity(dto);
         livro.setAutores(new ArrayList<>());
@@ -175,7 +174,6 @@ public class AluguelService {
         livroRepository.delete(livro);
     }
 
-    // --- LOCATÁRIO ---
     public LocatarioDTO criarLocatario(LocatarioDTO dto) {
         Locatario locatario = locatarioMapper.toEntity(dto);
         Locatario salvo = locatarioRepository.save(locatario);
@@ -204,7 +202,6 @@ public class AluguelService {
                 .collect(Collectors.toList());
     }
 
-    // --- ALUGUEL ---
     public AluguelDTO criarAluguel(AluguelDTO dto) {
         if (dto.getLivros() == null || dto.getLivros().isEmpty()) {
             throw new IllegalArgumentException("É necessário informar ao menos um livro para o aluguel.");
