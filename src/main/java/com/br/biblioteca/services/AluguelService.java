@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,7 +28,7 @@ public class AluguelService {
     private final LocatarioMapper locatarioMapper;
     private final AluguelMapper aluguelMapper;
 
-   public AutorDTO criarAutor(AutorDTO dto) {
+    public AutorDTO criarAutor(AutorDTO dto) {
         Autor autor = autorMapper.toEntity(dto);
         Autor salvo = autorRepository.save(autor);
         return autorMapper.toDto(salvo);
@@ -41,7 +41,8 @@ public class AluguelService {
         autor.setSexo(dto.getSexo());
         autor.setAnoNascimento(dto.getAnoNascimento());
         autor.setCpf(dto.getCpf());
-        return autorMapper.toDto(autorRepository.save(autor));
+        Autor salvo = autorRepository.save(autor);
+        return autorMapper.toDto(salvo);
     }
 
     public List<AutorDTO> listarAutores() {
@@ -70,25 +71,82 @@ public class AluguelService {
     public LivroDTO criarLivro(LivroDTO dto) {
         Livro livro = livroMapper.toEntity(dto);
 
-
         if (dto.getAutores() != null && !dto.getAutores().isEmpty()) {
             List<Autor> autores = dto.getAutores().stream()
-                    .map(a -> autorRepository.findById(a.getId())
-                            .orElseThrow(() -> new EntityNotFoundException("Autor ID " + a.getId() + " não encontrado")))
+                    .map(aDto -> autorRepository.findById(aDto.getId())
+                            .orElseThrow(() -> new EntityNotFoundException("Autor ID " + aDto.getId() + " não encontrado")))
                     .collect(Collectors.toList());
-            livro.setAutores(autores);
+
+            livro.setAutores(new ArrayList<>(autores));
+
+            for (Autor autor : autores) {
+                if (autor.getLivros() == null) {
+                    autor.setLivros(new ArrayList<>());
+                }
+                if (!autor.getLivros().contains(livro)) {
+                    autor.getLivros().add(livro);
+                }
+            }
         }
+
         Livro salvo = livroRepository.save(livro);
+
+        if (salvo.getAutores() != null && !salvo.getAutores().isEmpty()) {
+            for (Autor autor : salvo.getAutores()) {
+                Autor autorManaged = autorRepository.findById(autor.getId())
+                        .orElseThrow(() -> new EntityNotFoundException("Autor ID " + autor.getId() + " não encontrado após salvar livro"));
+                if (autorManaged.getLivros() == null) autorManaged.setLivros(new ArrayList<>());
+                if (autorManaged.getLivros().stream().noneMatch(l -> Objects.equals(l.getId(), salvo.getId()))) {
+                    autorManaged.getLivros().add(salvo);
+                    autorRepository.save(autorManaged);
+                }
+            }
+        }
+
         return livroMapper.toDto(salvo);
     }
 
     public LivroDTO atualizarLivro(Long id, LivroDTO dto) {
         Livro livro = livroRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Livro não encontrado"));
+
         livro.setNome(dto.getNome());
         livro.setIsbn(dto.getIsbn());
         livro.setDataPublicacao(dto.getDataPublicacao());
-        return livroMapper.toDto(livroRepository.save(livro));
+
+        if (dto.getAutores() != null) {
+            if (livro.getAutores() != null) {
+                for (Autor antigo : new ArrayList<>(livro.getAutores())) {
+                    Autor a = autorRepository.findById(antigo.getId())
+                            .orElseThrow(() -> new EntityNotFoundException("Autor ID " + antigo.getId() + " não encontrado"));
+                    if (a.getLivros() != null) {
+                        a.setLivros(a.getLivros().stream()
+                                .filter(l -> !Objects.equals(l.getId(), livro.getId()))
+                                .collect(Collectors.toList()));
+                        autorRepository.save(a);
+                    }
+                }
+            }
+
+            List<Autor> novos = dto.getAutores().stream()
+                    .map(aDto -> autorRepository.findById(aDto.getId())
+                            .orElseThrow(() -> new EntityNotFoundException("Autor ID " + aDto.getId() + " não encontrado")))
+                    .collect(Collectors.toList());
+            livro.setAutores(new ArrayList<>(novos));
+
+            for (Autor autor : novos) {
+                Autor autorManaged = autorRepository.findById(autor.getId())
+                        .orElseThrow(() -> new EntityNotFoundException("Autor ID " + autor.getId() + " não encontrado"));
+                if (autorManaged.getLivros() == null) autorManaged.setLivros(new ArrayList<>());
+                if (autorManaged.getLivros().stream().noneMatch(l -> Objects.equals(l.getId(), livro.getId()))) {
+                    autorManaged.getLivros().add(livro);
+                    autorRepository.save(autorManaged);
+                }
+            }
+        }
+
+        Livro salvo = livroRepository.save(livro);
+        return livroMapper.toDto(salvo);
     }
 
     public LivroDTO buscarLivroPorId(Long id) {
@@ -104,7 +162,6 @@ public class AluguelService {
     }
 
     public List<LivroDTO> listarLivrosDisponiveis() {
-        // livro está disponível se não estiver em nenhum aluguel sem dataDevolucao
         List<Livro> disponiveis = livroRepository.findAll().stream()
                 .filter(livro -> livro.getAlugueis() == null ||
                         livro.getAlugueis().stream().allMatch(a -> a.getDataDevolucao() != null))
@@ -136,6 +193,20 @@ public class AluguelService {
         if (livro.getAlugueis() != null && !livro.getAlugueis().isEmpty()) {
             throw new IllegalStateException("Livro já foi alugado e não pode ser excluído.");
         }
+
+        if (livro.getAutores() != null) {
+            for (Autor autor : new ArrayList<>(livro.getAutores())) {
+                Autor a = autorRepository.findById(autor.getId())
+                        .orElseThrow(() -> new EntityNotFoundException("Autor ID " + autor.getId() + " não encontrado"));
+                if (a.getLivros() != null) {
+                    a.setLivros(a.getLivros().stream()
+                            .filter(l -> !Objects.equals(l.getId(), livro.getId()))
+                            .collect(Collectors.toList()));
+                    autorRepository.save(a);
+                }
+            }
+        }
+
         livroRepository.delete(livro);
     }
 
@@ -189,12 +260,23 @@ public class AluguelService {
                 .dataRetirada(dto.getDataRetirada() != null ? dto.getDataRetirada() : LocalDate.now())
                 .dataDevolucao(dto.getDataDevolucao() != null
                         ? dto.getDataDevolucao()
-                        : LocalDate.now().plusDays(2)) // default 2 dias
+                        : LocalDate.now().plusDays(2))
                 .locatario(locatario)
-                .livros(livros)
+                .livros(new ArrayList<>(livros))
                 .build();
 
         Aluguel salvo = aluguelRepository.save(aluguel);
+
+        for (Livro livro : livros) {
+            Livro livroManaged = livroRepository.findById(livro.getId())
+                    .orElseThrow(() -> new EntityNotFoundException("Livro ID " + livro.getId() + " não encontrado"));
+            if (livroManaged.getAlugueis() == null) livroManaged.setAlugueis(new ArrayList<>());
+            if (livroManaged.getAlugueis().stream().noneMatch(a -> Objects.equals(a.getId(), salvo.getId()))) {
+                livroManaged.getAlugueis().add(salvo);
+                livroRepository.save(livroManaged);
+            }
+        }
+
         return aluguelMapper.toDto(salvo);
     }
 

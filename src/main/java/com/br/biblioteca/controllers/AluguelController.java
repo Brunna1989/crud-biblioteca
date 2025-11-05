@@ -31,8 +31,8 @@ public class AluguelController {
         return ResponseEntity.ok(aluguelService.listarAutores());
     }
 
-    @GetMapping("/autores/buscar")
-    public ResponseEntity<AutorDTO> buscarAutorPorNome(@RequestParam String nome) {
+    @GetMapping("/autores/nome/{nome}")
+    public ResponseEntity<AutorDTO> buscarAutorPorNome(@PathVariable String nome) {
         return ResponseEntity.ok(aluguelService.buscarAutorPorNome(nome));
     }
 
@@ -52,14 +52,14 @@ public class AluguelController {
         return ResponseEntity.ok(aluguelService.atualizarLivro(id, dto));
     }
 
-    @GetMapping("/livros/{id}")
-    public ResponseEntity<LivroDTO> buscarLivroPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(aluguelService.buscarLivroPorId(id));
-    }
-
     @GetMapping("/livros")
     public ResponseEntity<List<LivroDTO>> listarLivros() {
         return ResponseEntity.ok(aluguelService.listarLivros());
+    }
+
+    @GetMapping("/livros/{id}")
+    public ResponseEntity<LivroDTO> buscarLivroPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(aluguelService.buscarLivroPorId(id));
     }
 
     @GetMapping("/livros/disponiveis")
@@ -72,8 +72,8 @@ public class AluguelController {
         return ResponseEntity.ok(aluguelService.listarLivrosAlugados());
     }
 
-    @GetMapping("/livros/autor")
-    public ResponseEntity<List<LivroDTO>> listarLivrosPorAutor(@RequestParam String nomeAutor) {
+    @GetMapping("/livros/autor/{nomeAutor}")
+    public ResponseEntity<List<LivroDTO>> listarLivrosPorAutor(@PathVariable String nomeAutor) {
         return ResponseEntity.ok(aluguelService.listarLivrosPorAutor(nomeAutor));
     }
 
@@ -120,18 +120,8 @@ public class AluguelController {
         return ResponseEntity.noContent().build();
     }
 
-    @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<String> handleNotFound(EntityNotFoundException e) {
-        return ResponseEntity.status(404).body(e.getMessage());
-    }
-
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<String> handleIllegalState(IllegalStateException e) {
-        return ResponseEntity.badRequest().body(e.getMessage());
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException e) {
+    @ExceptionHandler({EntityNotFoundException.class, IllegalStateException.class, IllegalArgumentException.class})
+    public ResponseEntity<String> handleException(Exception e) {
         return ResponseEntity.badRequest().body(e.getMessage());
     }
 }
