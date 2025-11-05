@@ -130,14 +130,29 @@ public class AluguelServiceTest {
 
     @Test
     void deveCriarLivroComAutorExistente() {
+        Autor autorExistente = new Autor();
+        autorExistente.setId(1L);
+        autorExistente.setNome("Machado de Assis");
+
+        Livro livro = new Livro();
+        livro.setId(1L);
+        livro.setNome("Dom Casmurro");
+        livro.setAutores(List.of(autorExistente));
+
+        LivroDTO livroDTO = new LivroDTO();
+        livroDTO.setNome("Dom Casmurro");
+
         when(livroMapper.toEntity(livroDTO)).thenReturn(livro);
-        when(autorRepository.findAll()).thenReturn(List.of(autor));
-        when(autorRepository.save(any())).thenReturn(autor);
+        when(autorRepository.existsById(1L)).thenReturn(true);
+        when(autorRepository.findById(1L)).thenReturn(Optional.of(autorExistente));
         when(livroRepository.save(any())).thenReturn(livro);
         when(livroMapper.toDto(livro)).thenReturn(livroDTO);
 
         LivroDTO result = aluguelService.criarLivroComNovosAutores(livroDTO);
+
+        assertNotNull(result);
         assertEquals("Dom Casmurro", result.getNome());
+        verify(livroRepository, times(1)).save(any(Livro.class));
     }
 
     @Test
