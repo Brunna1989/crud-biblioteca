@@ -11,6 +11,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -52,7 +53,7 @@ public class Locatario {
     private String cpf;
 
     @OneToMany(mappedBy = "locatario")
-    private List<Aluguel> alugueis;
-
-
+    @Builder.Default
+    private List<Aluguel> alugueis = new ArrayList<>();
 }
+
