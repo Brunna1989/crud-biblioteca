@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "nome", uniqueConstraints = {
+@Table(name = "Locatários", uniqueConstraints = {
         @UniqueConstraint(columnNames = "telefone")
 
 })
