@@ -3,8 +3,6 @@ package com.br.biblioteca.mappers;
 import com.br.biblioteca.dtos.AluguelDTO;
 import com.br.biblioteca.dtos.LivroDTO;
 import com.br.biblioteca.entities.Aluguel;
-import com.br.biblioteca.entities.Livro;
-import com.br.biblioteca.entities.Locatario;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;

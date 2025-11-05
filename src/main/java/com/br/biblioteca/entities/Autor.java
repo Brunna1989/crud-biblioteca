@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -33,6 +34,7 @@ public class Autor {
     private String cpf;
 
     @ManyToMany(mappedBy = "autores")
-    private List<Livro> livros;
+    @Builder.Default
+    private List<Livro> livros = new ArrayList<>();
 }
 
