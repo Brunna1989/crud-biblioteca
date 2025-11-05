@@ -33,7 +33,6 @@ public class Livro {
     @Column(name = "data_publicacao", nullable = false)
     private LocalDate dataPublicacao;
 
-
     @ManyToMany
     @JoinTable(
             name = "livro_autor",

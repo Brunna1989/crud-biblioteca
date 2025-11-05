@@ -1,6 +1,5 @@
 package com.br.biblioteca.entities;
 
-
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -15,9 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "Locatarios", uniqueConstraints = {
+@Table(name = "nome", uniqueConstraints = {
         @UniqueConstraint(columnNames = "telefone")
-
 })
 @Data
 @NoArgsConstructor
@@ -56,4 +54,3 @@ public class Locatario {
     @Builder.Default
     private List<Aluguel> alugueis = new ArrayList<>();
 }
-

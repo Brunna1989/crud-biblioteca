@@ -44,7 +44,7 @@ public class AluguelController {
 
     @PostMapping("/livros")
     public ResponseEntity<LivroDTO> criarLivro(@RequestBody LivroDTO dto) {
-        return ResponseEntity.ok(aluguelService.criarLivro(dto));
+        return ResponseEntity.ok(aluguelService.criarLivroComNovosAutores(dto));
     }
 
     @PutMapping("/livros/{id}")

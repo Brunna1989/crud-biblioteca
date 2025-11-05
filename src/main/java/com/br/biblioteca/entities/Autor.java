@@ -3,7 +3,6 @@ package com.br.biblioteca.entities;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,4 +36,3 @@ public class Autor {
     @Builder.Default
     private List<Livro> livros = new ArrayList<>();
 }
-
