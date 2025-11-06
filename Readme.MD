@@ -1,6 +1,6 @@
 # 📚 API Biblioteca – Sistema de Gerenciamento de Aluguéis de Livros
 
-Este projeto é uma API REST desenvolvida em **Java 21** com **Spring Boot**, que gerencia o fluxo completo de uma biblioteca: autores, livros, locatários e aluguéis.  
+Este projeto é uma API REST desenvolvida em **Java 17** com **Spring Boot**, que gerencia o fluxo completo de uma biblioteca: autores, livros, locatários e aluguéis.  
 Permite cadastrar, atualizar, listar e remover entidades, além de controlar a disponibilidade dos livros e a devolução de exemplares.
 
 ---
@@ -10,7 +10,7 @@ Permite cadastrar, atualizar, listar e remover entidades, além de controlar a d
 - Spring Boot
 - Spring Data JPA
 - Lombok
-- H2 Database
+- MySQL
 - Maven
 - RESTful API
 
@@ -61,11 +61,96 @@ Permite cadastrar, atualizar, listar e remover entidades, além de controlar a d
 
 ## 🧰 Extras
 
-### 💾 Banco de Dados em Memória (H2)
-Acesse em: [http://localhost:8080/h2-console](http://localhost:8080/h2-console)
-- **JDBC URL:** `jdbc:h2:mem:biblioteca`
-- **Usuário:** `sa`
-- **Senha:** *(vazio)*
+## 💾 Acesso ao Banco de Dados MySQL para Testes da Aplicação
+
+Para revisar e testar a aplicação, siga os passos abaixo para acessar o banco de dados **MySQL** localmente e validar as tabelas geradas automaticamente pelo **Spring Boot**.
+
+---
+
+### 🔧 Configurações do Banco de Dados
+As configurações utilizadas pela aplicação estão definidas no arquivo `application.properties`:
+
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/biblioteca?createDatabaseIfNotExist=true&serverTimezone=America/Sao_Paulo
+spring.datasource.username=root
+spring.datasource.password=root123
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
+````
+
+## 🖥️ Acessando o MySQL via CMD (Windows)
+
+- 1 - Certifique-se de que o serviço MySQL está ativo:
+
+```bash
+net start MySQL80
+````
+- 2 -Acesse o MySQL com o usuário root:
+
+````bash
+
+mysql -u root -p
+````
+- 3 - Liste os bancos disponíveis para confirmar a existência do banco da aplicação:
+
+````bash
+SHOW DATABASES;
+````
+
+
+Você deverá ver algo como:
+
+```psql
++--------------------+
+| Database           |
++--------------------+
+| biblioteca         |
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
++--------------------+
+````
+
+- 4 - Selecione o banco de dados da aplicação:
+
+```psql
+USE biblioteca;
+````
+
+- 5 - Liste as tabelas criadas automaticamente pelo Spring Boot:
+
+```psql
+SHOW TABLES;
+
+
+## Exemplo de resultado esperado:
+
++---------------------+
+| Tables_in_biblioteca |
++---------------------+
+| alugueis            |
+| autores             |
+| livros              |
+| locatarios          |
+| livros_autores      |
++---------------------+
+````    
+
+# ✅ Observações:
+
+O banco é criado automaticamente ao executar a aplicação, caso ainda não exista.
+
+O usuário padrão utilizado é root com a senha root123.
+
+O dialeto do Hibernate está configurado para MySQL8Dialect, garantindo compatibilidade total com o MySQL 8.0.
+
+Certifique-se de que o serviço MySQL80 está em execução antes de rodar a aplicação.
+
+---
 
 ### 🔐 Transações
 As operações críticas estão anotadas com `@Transactional` para garantir consistência entre as tabelas.
