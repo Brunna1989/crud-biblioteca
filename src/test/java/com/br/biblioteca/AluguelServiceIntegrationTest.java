@@ -1,7 +1,6 @@
 package com.br.biblioteca;
 
 import com.br.biblioteca.dtos.*;
-import com.br.biblioteca.entities.Aluguel;
 import com.br.biblioteca.repositories.*;
 import com.br.biblioteca.services.AluguelService;
 import jakarta.persistence.EntityNotFoundException;

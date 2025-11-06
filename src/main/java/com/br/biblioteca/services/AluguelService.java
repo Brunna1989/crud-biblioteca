@@ -73,44 +73,26 @@ public class AluguelService {
         Livro livro = livroMapper.toEntity(dto);
         livro.setAutores(new ArrayList<>());
 
-        if (dto.getAutores() != null && !dto.getAutores().isEmpty()) {
-            for (AutorDTO autorDTO : dto.getAutores()) {
-                Autor autor;
+        if (dto.getAutores() == null || dto.getAutores().isEmpty()) {
+            throw new IllegalArgumentException("É necessário informar pelo menos um autor para o livro.");
+        }
 
-                Optional<Autor> existente = autorRepository.findAll().stream()
-                        .filter(a -> a.getCpf() != null && a.getCpf().equalsIgnoreCase(autorDTO.getCpf()))
-                        .findFirst();
+        for (AutorDTO autorDTO : dto.getAutores()) {
+            Autor autor = autorRepository.findById(autorDTO.getId())
+                    .orElseThrow(() -> new EntityNotFoundException("Autor não encontrado com ID: " + autorDTO.getId()));
 
-                if (existente.isPresent()) {
-                    autor = existente.get();
-                } else {
-                    autor = autorMapper.toEntity(autorDTO);
-                    autor.setLivros(new ArrayList<>());
-                    autor = autorRepository.save(autor);
-                }
+            livro.getAutores().add(autor);
 
-                livro.getAutores().add(autor);
+            if (autor.getLivros() == null) {
+                autor.setLivros(new ArrayList<>());
+            }
 
-                if (autor.getLivros() == null) {
-                    autor.setLivros(new ArrayList<>());
-                }
-                if (autor.getLivros().stream().noneMatch(l -> Objects.equals(l.getId(), livro.getId()))) {
-                    autor.getLivros().add(livro);
-                }
+            if (autor.getLivros().stream().noneMatch(l -> Objects.equals(l.getId(), livro.getId()))) {
+                autor.getLivros().add(livro);
             }
         }
 
         Livro salvo = livroRepository.save(livro);
-
-        for (Autor autor : salvo.getAutores()) {
-            Autor autorManaged = autorRepository.findById(autor.getId())
-                    .orElseThrow(() -> new EntityNotFoundException("Autor não encontrado"));
-            if (autorManaged.getLivros().stream().noneMatch(l -> Objects.equals(l.getId(), salvo.getId()))) {
-                autorManaged.getLivros().add(salvo);
-                autorRepository.save(autorManaged);
-            }
-        }
-
         return livroMapper.toDto(salvo);
     }
 
