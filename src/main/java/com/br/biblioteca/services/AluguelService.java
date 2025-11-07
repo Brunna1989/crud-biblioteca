@@ -78,8 +78,7 @@ public class AluguelService {
                         .orElseThrow(() -> new EntityNotFoundException("Autor não encontrado com ID: " + autorId));
                 livro.getAutores().add(autor);
             }
-        }
-        else {
+        } else {
             throw new IllegalArgumentException("Informe os autoresIds de autores já cadastrados antes de criar o livro.");
         }
 
@@ -210,11 +209,12 @@ public class AluguelService {
                         .orElseThrow(() -> new EntityNotFoundException("Livro ID " + l.getId() + " não encontrado")))
                 .collect(Collectors.toList());
 
+        LocalDate dataRetirada = dto.getDataRetirada() != null ? dto.getDataRetirada() : LocalDate.now();
+        LocalDate dataDevolucao = dataRetirada.plusDays(2); // ⏰ Sempre 2 dias depois
+
         Aluguel aluguel = Aluguel.builder()
-                .dataRetirada(dto.getDataRetirada() != null ? dto.getDataRetirada() : LocalDate.now())
-                .dataDevolucao(dto.getDataDevolucao() != null
-                        ? dto.getDataDevolucao()
-                        : LocalDate.now().plusDays(2))
+                .dataRetirada(dataRetirada)
+                .dataDevolucao(dataDevolucao)
                 .locatario(locatario)
                 .livros(new ArrayList<>(livros))
                 .build();
@@ -222,6 +222,7 @@ public class AluguelService {
         Aluguel salvo = aluguelRepository.save(aluguel);
         return aluguelMapper.toDto(salvo);
     }
+
 
     public List<AluguelDTO> listarAlugueis() {
         return aluguelRepository.findAll().stream()
@@ -232,7 +233,15 @@ public class AluguelService {
     public void finalizarAluguel(Long id) {
         Aluguel aluguel = aluguelRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Aluguel não encontrado"));
-        aluguel.setDataDevolucao(LocalDate.now());
+
+        LocalDate hoje = LocalDate.now();
+
+        if (hoje.isAfter(aluguel.getDataDevolucao())) {
+            long diasAtraso = java.time.temporal.ChronoUnit.DAYS.between(aluguel.getDataDevolucao(), hoje);
+            throw new IllegalStateException("Devolução atrasada em " + diasAtraso + " dia(s). Multa será aplicada.");
+        }
+
+        aluguel.setDataDevolucao(hoje);
         aluguelRepository.save(aluguel);
     }
 }
