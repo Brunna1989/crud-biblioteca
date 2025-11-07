@@ -6,4 +6,8 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AluguelRepository extends JpaRepository<Aluguel,Long> {
+
+    boolean existsByLivrosIdAndDataDevolucaoIsNull(Long livroId);
+
+
 }

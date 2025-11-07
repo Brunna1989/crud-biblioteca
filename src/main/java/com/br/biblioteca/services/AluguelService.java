@@ -210,28 +210,15 @@ public class AluguelService {
                 .collect(Collectors.toList());
 
         for (Livro livro : livros) {
-            boolean livroJaAlugado = livro.getAlugueis() != null &&
-                    livro.getAlugueis().stream().anyMatch(a -> a.getDataDevolucao() == null);
-
+            boolean livroJaAlugado = aluguelRepository.existsByLivrosIdAndDataDevolucaoIsNull(livro.getId());
             if (livroJaAlugado) {
-                throw new IllegalStateException(
-                        "O livro '" + livro.getNome() + "' (ID " + livro.getId() + ") já está alugado e ainda não foi devolvido.");
+                throw new IllegalStateException("O livro '" + livro.getNome() + "' já está alugado e ainda não foi devolvido.");
             }
         }
 
-        boolean locatarioJaTemEsseLivro = aluguelRepository.findAll().stream()
-                .anyMatch(a ->
-                        a.getLocatario().getId().equals(locatario.getId()) &&
-                                a.getLivros().stream().anyMatch(l -> livros.contains(l)) &&
-                                a.getDataDevolucao() == null
-                );
-
-        if (locatarioJaTemEsseLivro) {
-            throw new IllegalStateException("O locatário já possui este livro alugado e ainda não devolvido.");
-        }
 
         LocalDate dataRetirada = dto.getDataRetirada() != null ? dto.getDataRetirada() : LocalDate.now();
-        LocalDate dataDevolucao = dataRetirada.plusDays(2); // sempre 2 dias depois
+        LocalDate dataDevolucao = dataRetirada.plusDays(2);
 
         Aluguel aluguel = Aluguel.builder()
                 .dataRetirada(dataRetirada)
@@ -243,7 +230,6 @@ public class AluguelService {
         Aluguel salvo = aluguelRepository.save(aluguel);
         return aluguelMapper.toDto(salvo);
     }
-
 
 
     public List<AluguelDTO> listarAlugueis() {
@@ -258,9 +244,9 @@ public class AluguelService {
 
         LocalDate hoje = LocalDate.now();
 
-        if (hoje.isAfter(aluguel.getDataDevolucao())) {
+        if (aluguel.getDataDevolucao() != null && hoje.isAfter(aluguel.getDataDevolucao())) {
             long diasAtraso = java.time.temporal.ChronoUnit.DAYS.between(aluguel.getDataDevolucao(), hoje);
-            throw new IllegalStateException("Devolução atrasada em " + diasAtraso + " dia(s). Multa será aplicada.");
+            System.out.println("⚠️ Atenção: Devolução atrasada em " + diasAtraso + " dia(s).");
         }
 
         aluguel.setDataDevolucao(hoje);
