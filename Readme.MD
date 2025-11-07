@@ -151,6 +151,11 @@ SELECT * FROM livro_autor;
 SELECT * FROM aluguel_livros;
 ```
 
+## Observação:
+
+💡 Use apenas os nomes que realmente aparecem no resultado do SHOW TABLES;.
+Se quiser visualizar tudo de uma vez, copie e cole todos os SELECT juntos — o MySQL vai executar um por um.
+
 
 # ✅ Observações:
 
@@ -163,6 +168,15 @@ O dialeto do Hibernate está configurado para MySQL8Dialect, garantindo compatib
 Certifique-se de que o serviço MySQL80 está em execução antes de rodar a aplicação.
 
 ---
+
+## 💥 Dica extra — ver a estrutura (colunas) de cada tabela:
+
+```psql
+DESCRIBE autores;
+DESCRIBE livros;
+DESCRIBE locatario;
+DESCRIBE aluguel;
+```
 
 ### 🔐 Transações
 As operações críticas estão anotadas com `@Transactional` para garantir consistência entre as tabelas.
