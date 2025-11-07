@@ -79,19 +79,14 @@ public class AluguelService {
                 livro.getAutores().add(autor);
             }
         }
-        else if (dto.getAutores() != null && !dto.getAutores().isEmpty()) {
-            for (AutorDTO autorDTO : dto.getAutores()) {
-                Autor autor = autorMapper.toEntity(autorDTO);
-                autorRepository.save(autor);
-                livro.getAutores().add(autor);
-            }
-        } else {
-            throw new IllegalArgumentException("É necessário informar ao menos um autor (ID ou objeto AutorDTO).");
+        else {
+            throw new IllegalArgumentException("Informe os autoresIds de autores já cadastrados antes de criar o livro.");
         }
 
         Livro salvo = livroRepository.save(livro);
         return livroMapper.toDto(salvo);
     }
+
 
     public LivroDTO buscarLivroPorId(Long id) {
         Livro livro = livroRepository.findById(id)
