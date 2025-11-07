@@ -38,4 +38,13 @@ public class Aluguel {
     )
     @Builder.Default
     private List<Livro> livros = new ArrayList<>();
+
+    public void emprestarLivro(Livro livro) {
+        if (!livro.isDisponivel()) {
+            throw new IllegalStateException("O livro '" + livro.getNome() + "' já está alugado e não pode ser emprestado novamente.");
+        }
+        livro.setDisponivel(false);
+        this.livros.add(livro);
+    }
 }
+

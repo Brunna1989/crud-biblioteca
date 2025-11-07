@@ -70,6 +70,7 @@ public class AluguelService {
 
     public LivroDTO criarLivroComNovosAutores(LivroDTO dto) {
         Livro livro = livroMapper.toEntity(dto);
+        livro.setDisponivel(true);
         livro.setAutores(new ArrayList<>());
 
         if (dto.getAutoresIds() != null && !dto.getAutoresIds().isEmpty()) {
@@ -85,7 +86,6 @@ public class AluguelService {
         Livro salvo = livroRepository.save(livro);
         return livroMapper.toDto(salvo);
     }
-
 
     public LivroDTO buscarLivroPorId(Long id) {
         Livro livro = livroRepository.findById(id)
@@ -204,28 +204,17 @@ public class AluguelService {
         Locatario locatario = locatarioRepository.findById(dto.getLocatarioId())
                 .orElseThrow(() -> new EntityNotFoundException("Locatário não encontrado"));
 
-        List<Livro> livros = dto.getLivros().stream()
-                .map(l -> livroRepository.findById(l.getId())
-                        .orElseThrow(() -> new EntityNotFoundException("Livro ID " + l.getId() + " não encontrado")))
-                .collect(Collectors.toList());
+        Aluguel aluguel = new Aluguel();
+        aluguel.setLocatario(locatario);
+        aluguel.setDataRetirada(dto.getDataRetirada() != null ? dto.getDataRetirada() : LocalDate.now());
 
-        for (Livro livro : livros) {
-            boolean livroJaAlugado = aluguelRepository.existsByLivrosIdAndDataDevolucaoIsNull(livro.getId());
-            if (livroJaAlugado) {
-                throw new IllegalStateException("O livro '" + livro.getNome() + "' já está alugado e ainda não foi devolvido.");
-            }
+        for (LivroDTO livroDTO : dto.getLivros()) {
+            Livro livro = livroRepository.findById(livroDTO.getId())
+                    .orElseThrow(() -> new EntityNotFoundException("Livro não encontrado com ID: " + livroDTO.getId()));
+
+            aluguel.emprestarLivro(livro);
+            livroRepository.save(livro);
         }
-
-
-        LocalDate dataRetirada = dto.getDataRetirada() != null ? dto.getDataRetirada() : LocalDate.now();
-        LocalDate dataDevolucao = dataRetirada.plusDays(2);
-
-        Aluguel aluguel = Aluguel.builder()
-                .dataRetirada(dataRetirada)
-                .dataDevolucao(dataDevolucao)
-                .locatario(locatario)
-                .livros(new ArrayList<>(livros))
-                .build();
 
         Aluguel salvo = aluguelRepository.save(aluguel);
         return aluguelMapper.toDto(salvo);
@@ -242,14 +231,13 @@ public class AluguelService {
         Aluguel aluguel = aluguelRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Aluguel não encontrado"));
 
-        LocalDate hoje = LocalDate.now();
+        aluguel.setDataDevolucao(LocalDate.now());
 
-        if (aluguel.getDataDevolucao() != null && hoje.isAfter(aluguel.getDataDevolucao())) {
-            long diasAtraso = java.time.temporal.ChronoUnit.DAYS.between(aluguel.getDataDevolucao(), hoje);
-            System.out.println("⚠️ Atenção: Devolução atrasada em " + diasAtraso + " dia(s).");
+        for (Livro livro : aluguel.getLivros()) {
+            livro.setDisponivel(true); // ✅ Devolve o livro
+            livroRepository.save(livro);
         }
 
-        aluguel.setDataDevolucao(hoje);
         aluguelRepository.save(aluguel);
     }
 }

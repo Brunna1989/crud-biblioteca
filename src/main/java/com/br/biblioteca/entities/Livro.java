@@ -33,6 +33,9 @@ public class Livro {
     @Column(name = "data_publicacao", nullable = false)
     private LocalDate dataPublicacao;
 
+    @Column(name = "disponivel", nullable = false)
+    private boolean isDisponivel = true;
+
     @ManyToMany
     @JoinTable(
             name = "livro_autor",

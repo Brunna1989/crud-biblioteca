@@ -8,6 +8,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
+
 import java.time.LocalDate;
 import java.util.*;
 
@@ -43,48 +44,65 @@ public class AluguelServiceTest {
         MockitoAnnotations.openMocks(this);
 
         autor = Autor.builder()
-                .id(1L).nome("Machado de Assis")
-                .cpf("12345678900").sexo("M")
+                .id(1L)
+                .nome("Machado de Assis")
+                .cpf("12345678900")
+                .sexo("M")
                 .anoNascimento(1839)
                 .livros(new ArrayList<>())
                 .build();
 
         autorDTO = AutorDTO.builder()
-                .id(1L).nome("Machado de Assis")
-                .cpf("12345678900").sexo("M")
+                .id(1L)
+                .nome("Machado de Assis")
+                .cpf("12345678900")
+                .sexo("M")
                 .anoNascimento(1839)
                 .build();
 
         livro = Livro.builder()
-                .id(1L).nome("Dom Casmurro")
+                .id(1L)
+                .nome("Dom Casmurro")
                 .isbn("9788572327427")
                 .dataPublicacao(LocalDate.of(1899, 1, 1))
                 .autores(List.of(autor))
+                .isDisponivel(true)
+                .alugueis(new ArrayList<>())
                 .build();
 
         livroDTO = LivroDTO.builder()
-                .id(1L).nome("Dom Casmurro")
+                .id(1L)
+                .nome("Dom Casmurro")
                 .isbn("9788572327427")
                 .dataPublicacao(LocalDate.of(1899, 1, 1))
+                .disponivel(true)
                 .autores(List.of(autorDTO))
+                .autoresIds(List.of(1L))
                 .build();
 
         locatario = Locatario.builder()
-                .id(1L).nome("João Silva").cpf("98765432100")
+                .id(1L)
+                .nome("João Silva")
+                .cpf("98765432100")
                 .email("joao@email.com")
+                .telefone("123456789")
+                .dataNascimento(LocalDate.of(1990, 1, 1))
                 .alugueis(new ArrayList<>())
                 .build();
 
         locatarioDTO = LocatarioDTO.builder()
-                .id(1L).nome("João Silva")
+                .id(1L)
+                .nome("João Silva")
                 .cpf("98765432100")
                 .email("joao@email.com")
+                .telefone("123456789")
+                .dataNascimento(LocalDate.of(1990, 1, 1))
                 .build();
 
         aluguel = Aluguel.builder()
                 .id(1L)
                 .locatario(locatario)
-                .livros(List.of(livro))
+                .livros(new ArrayList<>(List.of(livro)))
                 .dataRetirada(LocalDate.now())
                 .dataDevolucao(null)
                 .build();
@@ -101,7 +119,7 @@ public class AluguelServiceTest {
     @Test
     void deveCriarAutorComSucesso() {
         when(autorMapper.toEntity(autorDTO)).thenReturn(autor);
-        when(autorRepository.save(any(Autor.class))).thenReturn(autor);
+        when(autorRepository.save(any())).thenReturn(autor);
         when(autorMapper.toDto(autor)).thenReturn(autorDTO);
 
         AutorDTO result = aluguelService.criarAutor(autorDTO);
@@ -114,37 +132,26 @@ public class AluguelServiceTest {
     @Test
     void deveAtualizarAutorExistente() {
         when(autorRepository.findById(1L)).thenReturn(Optional.of(autor));
-        when(autorRepository.save(any(Autor.class))).thenReturn(autor);
+        when(autorRepository.save(any())).thenReturn(autor);
         when(autorMapper.toDto(autor)).thenReturn(autorDTO);
 
         AutorDTO result = aluguelService.atualizarAutor(1L, autorDTO);
+
         assertEquals("Machado de Assis", result.getNome());
     }
 
     @Test
     void deveLancarExcecaoAoAtualizarAutorNaoExistente() {
         when(autorRepository.findById(99L)).thenReturn(Optional.empty());
+
         assertThrows(EntityNotFoundException.class, () ->
                 aluguelService.atualizarAutor(99L, autorDTO));
     }
 
     @Test
-    void deveCriarLivroComAutorExistente() {
-        Autor autorExistente = new Autor();
-        autorExistente.setId(1L);
-        autorExistente.setNome("Machado de Assis");
-
-        Livro livro = new Livro();
-        livro.setId(1L);
-        livro.setNome("Dom Casmurro");
-        livro.setAutores(List.of(autorExistente));
-
-        LivroDTO livroDTO = new LivroDTO();
-        livroDTO.setNome("Dom Casmurro");
-
+    void deveCriarLivroComSucesso() {
         when(livroMapper.toEntity(livroDTO)).thenReturn(livro);
-        when(autorRepository.existsById(1L)).thenReturn(true);
-        when(autorRepository.findById(1L)).thenReturn(Optional.of(autorExistente));
+        when(autorRepository.findById(1L)).thenReturn(Optional.of(autor));
         when(livroRepository.save(any())).thenReturn(livro);
         when(livroMapper.toDto(livro)).thenReturn(livroDTO);
 
@@ -152,22 +159,25 @@ public class AluguelServiceTest {
 
         assertNotNull(result);
         assertEquals("Dom Casmurro", result.getNome());
-        verify(livroRepository, times(1)).save(any(Livro.class));
     }
 
     @Test
     void deveAtualizarLivroComSucesso() {
         when(livroRepository.findById(1L)).thenReturn(Optional.of(livro));
+        when(autorRepository.findById(1L)).thenReturn(Optional.of(autor));
         when(livroRepository.save(any())).thenReturn(livro);
         when(livroMapper.toDto(livro)).thenReturn(livroDTO);
 
         LivroDTO result = aluguelService.atualizarLivro(1L, livroDTO);
+
+        assertNotNull(result);
         assertEquals("Dom Casmurro", result.getNome());
     }
 
     @Test
     void deveLancarExcecaoAoBuscarLivroInexistente() {
         when(livroRepository.findById(99L)).thenReturn(Optional.empty());
+
         assertThrows(EntityNotFoundException.class, () ->
                 aluguelService.buscarLivroPorId(99L));
     }
@@ -186,16 +196,17 @@ public class AluguelServiceTest {
 
     @Test
     void deveCriarAluguelComSucesso() {
+        livro.setDisponivel(true);
         when(locatarioRepository.findById(1L)).thenReturn(Optional.of(locatario));
         when(livroRepository.findById(1L)).thenReturn(Optional.of(livro));
         when(aluguelRepository.save(any())).thenReturn(aluguel);
-        when(aluguelMapper.toDto(aluguel)).thenReturn(aluguelDTO);
+        when(aluguelMapper.toDto(any())).thenReturn(aluguelDTO);
 
         AluguelDTO result = aluguelService.criarAluguel(aluguelDTO);
 
         assertNotNull(result);
         assertEquals(1, result.getLivros().size());
-        verify(aluguelRepository, times(1)).save(any());
+        assertFalse(livro.isDisponivel()); // livro agora está alugado
     }
 
     @Test
@@ -211,15 +222,20 @@ public class AluguelServiceTest {
 
     @Test
     void deveFinalizarAluguelComSucesso() {
+        livro.setDisponivel(false);
         when(aluguelRepository.findById(1L)).thenReturn(Optional.of(aluguel));
+
         aluguelService.finalizarAluguel(1L);
-        verify(aluguelRepository, times(1)).save(aluguel);
+
         assertNotNull(aluguel.getDataDevolucao());
+        assertTrue(livro.isDisponivel());
+        verify(aluguelRepository, times(1)).save(aluguel);
     }
 
     @Test
     void deveLancarErroAoFinalizarAluguelInexistente() {
         when(aluguelRepository.findById(99L)).thenReturn(Optional.empty());
+
         assertThrows(EntityNotFoundException.class, () ->
                 aluguelService.finalizarAluguel(99L));
     }

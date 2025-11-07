@@ -32,10 +32,10 @@ public class LivroMapper {
                 .nome(livro.getNome())
                 .isbn(livro.getIsbn())
                 .dataPublicacao(livro.getDataPublicacao())
+                .disponivel(livro.isDisponivel()) // ✅ agora o DTO reflete o estado real
                 .autores(autores)
                 .build();
     }
-
 
     public Livro toEntity(LivroDTO dto) {
         if (dto == null) return null;
@@ -45,18 +45,19 @@ public class LivroMapper {
                 .nome(dto.getNome())
                 .isbn(dto.getIsbn())
                 .dataPublicacao(dto.getDataPublicacao())
+                .isDisponivel(dto.getDisponivel() == null ? true : dto.getDisponivel()) // ✅ define true por padrão
                 .build();
     }
 
     public LivroDTO toDtoShallow(Livro livro) {
         if (livro == null) return null;
+
         return LivroDTO.builder()
                 .id(livro.getId())
                 .nome(livro.getNome())
                 .isbn(livro.getIsbn())
                 .dataPublicacao(livro.getDataPublicacao())
-                .autores(null)
+                .disponivel(livro.isDisponivel()) // ✅ mantém o mesmo comportamento
                 .build();
     }
-
 }
