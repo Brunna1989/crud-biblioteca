@@ -140,6 +140,17 @@ SHOW tables;
 +---------------------+
 ````    
 
+## 🧾 6 - Ver dados de cada tabela (uma por uma):
+
+```psql
+SELECT * FROM autores;
+SELECT * FROM livros;
+SELECT * FROM locatario;
+SELECT * FROM aluguel;
+SELECT * FROM livro_autor;
+SELECT * FROM aluguel_livros;
+```
+
 
 # ✅ Observações:
 
