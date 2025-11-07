@@ -155,7 +155,6 @@ public class AluguelService {
         return livroMapper.toDto(atualizado);
     }
 
-
     public void deletarLivro(Long id) {
         Livro livro = livroRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Livro não encontrado"));
@@ -205,8 +204,12 @@ public class AluguelService {
                 .orElseThrow(() -> new EntityNotFoundException("Locatário não encontrado"));
 
         Aluguel aluguel = new Aluguel();
+        LocalDate dataRetirada = dto.getDataRetirada() != null ? dto.getDataRetirada() : LocalDate.now();
         aluguel.setLocatario(locatario);
-        aluguel.setDataRetirada(dto.getDataRetirada() != null ? dto.getDataRetirada() : LocalDate.now());
+        aluguel.setDataRetirada(dataRetirada);
+
+        // ✅ Regra: devolução automática dois dias após a retirada
+        aluguel.setDataDevolucao(dataRetirada.plusDays(2));
 
         for (LivroDTO livroDTO : dto.getLivros()) {
             Livro livro = livroRepository.findById(livroDTO.getId())
@@ -219,7 +222,6 @@ public class AluguelService {
         Aluguel salvo = aluguelRepository.save(aluguel);
         return aluguelMapper.toDto(salvo);
     }
-
 
     public List<AluguelDTO> listarAlugueis() {
         return aluguelRepository.findAll().stream()
