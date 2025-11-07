@@ -19,4 +19,6 @@ public class LivroDTO {
     private LocalDate dataPublicacao;
 
     private List<AutorDTO> autores;
+
+    private List<Long> autoresIds;
 }

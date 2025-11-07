@@ -111,13 +111,15 @@ public class LivroDTOTest {
         assertNull(dtoVazio.getId());
         assertNull(dtoVazio.getNome());
         assertNull(dtoVazio.getAutores());
+        assertNull(dtoVazio.getAutoresIds());
 
         LivroDTO dtoCompleto = new LivroDTO(
                 3L,
                 "Iracema",
                 "978-85-359-0001-1",
                 LocalDate.of(1865, 5, 1),
-                List.of(autor2)
+                List.of(autor2),
+                List.of(2L)
         );
 
         assertEquals(3L, dtoCompleto.getId());
@@ -126,5 +128,7 @@ public class LivroDTOTest {
         assertEquals(LocalDate.of(1865, 5, 1), dtoCompleto.getDataPublicacao());
         assertEquals(1, dtoCompleto.getAutores().size());
         assertEquals("José de Alencar", dtoCompleto.getAutores().get(0).getNome());
+        assertEquals(List.of(2L), dtoCompleto.getAutoresIds());
     }
 }
+

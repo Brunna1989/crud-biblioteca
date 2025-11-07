@@ -83,18 +83,18 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
 
 ## 🖥️ Acessando o MySQL via CMD (Windows)
 
-- 1 - Certifique-se de que o serviço MySQL está ativo:
+## 1 - Certifique-se de que o serviço MySQL está ativo:
 
 ```bash
 net start MySQL80
 ````
-- 2 -Acesse o MySQL com o usuário root:
+## 2 - Acesse o MySQL com o usuário root:
 
 ````bash
 
 mysql -u root -p
 ````
-- 3 - Liste os bancos disponíveis para confirmar a existência do banco da aplicação:
+## 3 -  Liste os bancos disponíveis para confirmar a existência do banco da aplicação:
 
 ````bash
 SHOW DATABASES;
@@ -115,21 +115,21 @@ Você deverá ver algo como:
 +--------------------+
 ````
 
-- 4 - Selecione o banco de dados da aplicação:
+## 4 - Selecione o banco de dados da aplicação:
 
 ```psql
 USE biblioteca;
 ````
 
-- 5 - Liste as tabelas criadas automaticamente pelo Spring Boot:
+## 🧩 5 - Mostrar todas as tabelas do banco:
 
 ```psql
-SHOW TABLES;
-
+SHOW tables;
+````
 
 ## Exemplo de resultado esperado:
 
-+---------------------+
+````+---------------------+
 | Tables_in_biblioteca |
 +---------------------+
 | alugueis            |
@@ -139,6 +139,7 @@ SHOW TABLES;
 | livros_autores      |
 +---------------------+
 ````    
+
 
 # ✅ Observações:
 

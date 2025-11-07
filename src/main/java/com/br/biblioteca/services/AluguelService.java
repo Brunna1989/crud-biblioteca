@@ -28,7 +28,6 @@ public class AluguelService {
     private final LocatarioMapper locatarioMapper;
     private final AluguelMapper aluguelMapper;
 
-
     public AutorDTO criarAutor(AutorDTO dto) {
         Autor autor = autorMapper.toEntity(dto);
         Autor salvo = autorRepository.save(autor);
@@ -73,37 +72,25 @@ public class AluguelService {
         Livro livro = livroMapper.toEntity(dto);
         livro.setAutores(new ArrayList<>());
 
-        if (dto.getAutores() == null || dto.getAutores().isEmpty()) {
-            throw new IllegalArgumentException("É necessário informar pelo menos um autor para o livro.");
+        if (dto.getAutoresIds() != null && !dto.getAutoresIds().isEmpty()) {
+            for (Long autorId : dto.getAutoresIds()) {
+                Autor autor = autorRepository.findById(autorId)
+                        .orElseThrow(() -> new EntityNotFoundException("Autor não encontrado com ID: " + autorId));
+                livro.getAutores().add(autor);
+            }
         }
-
-        for (AutorDTO autorDTO : dto.getAutores()) {
-            Autor autor = autorRepository.findById(autorDTO.getId())
-                    .orElseThrow(() -> new EntityNotFoundException("Autor não encontrado com ID: " + autorDTO.getId()));
-
-            livro.getAutores().add(autor);
-
-            if (autor.getLivros() == null) {
-                autor.setLivros(new ArrayList<>());
+        else if (dto.getAutores() != null && !dto.getAutores().isEmpty()) {
+            for (AutorDTO autorDTO : dto.getAutores()) {
+                Autor autor = autorMapper.toEntity(autorDTO);
+                autorRepository.save(autor);
+                livro.getAutores().add(autor);
             }
-
-            if (autor.getLivros().stream().noneMatch(l -> Objects.equals(l.getId(), livro.getId()))) {
-                autor.getLivros().add(livro);
-            }
+        } else {
+            throw new IllegalArgumentException("É necessário informar ao menos um autor (ID ou objeto AutorDTO).");
         }
 
         Livro salvo = livroRepository.save(livro);
         return livroMapper.toDto(salvo);
-    }
-
-    public LivroDTO atualizarLivro(Long id, LivroDTO dto) {
-        Livro livro = livroRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Livro não encontrado"));
-
-        livro.setNome(dto.getNome());
-        livro.setIsbn(dto.getIsbn());
-        livro.setDataPublicacao(dto.getDataPublicacao());
-        return livroMapper.toDto(livroRepository.save(livro));
     }
 
     public LivroDTO buscarLivroPorId(Long id) {
@@ -143,6 +130,37 @@ public class AluguelService {
                 .map(livroMapper::toDto)
                 .collect(Collectors.toList());
     }
+
+    public LivroDTO atualizarLivro(Long id, LivroDTO dto) {
+        Livro livro = livroRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Livro não encontrado"));
+
+        livro.setNome(dto.getNome());
+        livro.setIsbn(dto.getIsbn());
+        livro.setDataPublicacao(dto.getDataPublicacao());
+
+        List<Autor> novosAutores = new ArrayList<>();
+
+        if (dto.getAutoresIds() != null && !dto.getAutoresIds().isEmpty()) {
+            for (Long autorId : dto.getAutoresIds()) {
+                Autor autor = autorRepository.findById(autorId)
+                        .orElseThrow(() -> new EntityNotFoundException("Autor não encontrado com ID: " + autorId));
+                novosAutores.add(autor);
+            }
+        } else if (dto.getAutores() != null && !dto.getAutores().isEmpty()) {
+            for (AutorDTO autorDTO : dto.getAutores()) {
+                Autor autor = autorMapper.toEntity(autorDTO);
+                autorRepository.save(autor);
+                novosAutores.add(autor);
+            }
+        }
+
+        livro.setAutores(novosAutores);
+        Livro atualizado = livroRepository.save(livro);
+
+        return livroMapper.toDto(atualizado);
+    }
+
 
     public void deletarLivro(Long id) {
         Livro livro = livroRepository.findById(id)
