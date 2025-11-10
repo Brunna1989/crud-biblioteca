@@ -1,4 +1,4 @@
-package com.br.biblioteca;
+package com.br.biblioteca.controller;
 
 import com.br.biblioteca.dtos.*;
 import com.br.biblioteca.repositories.*;
@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
-public class AluguelServiceIntegrationTest {
+public class AluguelControllerIntegration {
 
     @Autowired
     private AluguelService aluguelService;
