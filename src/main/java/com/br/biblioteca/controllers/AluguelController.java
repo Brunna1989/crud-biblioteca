@@ -36,6 +36,11 @@ public class AluguelController {
         return ResponseEntity.ok(aluguelService.buscarAutorPorNome(nome));
     }
 
+    @GetMapping("/autores/search")
+    public ResponseEntity<AutorDTO> buscarAutorPorNomeParam(@RequestParam String nome) {
+        return ResponseEntity.ok(aluguelService.buscarAutorPorNomeParam(nome));
+    }
+
     @DeleteMapping("/autores/{id}")
     public ResponseEntity<Void> deletarAutor(@PathVariable Long id) {
         aluguelService.deletarAutor(id);
@@ -83,9 +88,21 @@ public class AluguelController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/livros/search")
+    public ResponseEntity<List<LivroDTO>> buscarLivrosPorNomeOuDisponibilidade(
+            @RequestParam(required = false) String nome,
+            @RequestParam(required = false) Boolean disponivel) {
+        return ResponseEntity.ok(aluguelService.buscarLivrosPorNomeOuDisponibilidade(nome, disponivel));
+    }
+
     @PostMapping("/locatarios")
     public ResponseEntity<LocatarioDTO> criarLocatario(@RequestBody LocatarioDTO dto) {
         return ResponseEntity.ok(aluguelService.criarLocatario(dto));
+    }
+
+    @PutMapping("/locatarios/{id}")
+    public ResponseEntity<LocatarioDTO> atualizarLocatario(@PathVariable Long id, @RequestBody LocatarioDTO dto) {
+        return ResponseEntity.ok(aluguelService.atualizarLocatario(id, dto));
     }
 
     @GetMapping("/locatarios")

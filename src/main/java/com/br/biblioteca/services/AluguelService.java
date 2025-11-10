@@ -59,6 +59,10 @@ public class AluguelService {
         return autorMapper.toDto(autor);
     }
 
+    public AutorDTO buscarAutorPorNomeParam(String nome) {
+        return buscarAutorPorNome(nome);
+    }
+
     public void deletarAutor(Long id) {
         Autor autor = autorRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Autor não encontrado"));
@@ -84,6 +88,16 @@ public class AluguelService {
         }
 
         Livro salvo = livroRepository.save(livro);
+        for (Autor autor : salvo.getAutores()) {
+            if (autor.getLivros() == null) {
+                autor.setLivros(new ArrayList<>());
+            }
+            if (!autor.getLivros().contains(salvo)) {
+                autor.getLivros().add(salvo);
+                autorRepository.save(autor);
+            }
+        }
+
         return livroMapper.toDto(salvo);
     }
 
@@ -125,6 +139,26 @@ public class AluguelService {
                 .collect(Collectors.toList());
     }
 
+     public List<LivroDTO> buscarLivrosPorNomeOuDisponibilidade(String nome, Boolean disponivel) {
+        return livroRepository.findAll().stream()
+                .filter(l -> {
+                    boolean okNome = true;
+                    boolean okDisp = true;
+                    if (nome != null && !nome.isBlank()) {
+                        okNome = l.getNome() != null && l.getNome().toLowerCase().contains(nome.toLowerCase());
+                    }
+                    if (disponivel != null) {
+                        // usa getAlugueis para verificar disponibilidade real
+                        boolean atualDisponivel = l.getAlugueis() == null ||
+                                l.getAlugueis().stream().allMatch(a -> a.getDataDevolucao() != null);
+                        okDisp = (disponivel.equals(atualDisponivel));
+                    }
+                    return okNome && okDisp;
+                })
+                .map(livroMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
     public LivroDTO atualizarLivro(Long id, LivroDTO dto) {
         Livro livro = livroRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Livro não encontrado"));
@@ -132,6 +166,12 @@ public class AluguelService {
         livro.setNome(dto.getNome());
         livro.setIsbn(dto.getIsbn());
         livro.setDataPublicacao(dto.getDataPublicacao());
+
+        List<Autor> autoresAtuais = livro.getAutores() == null ? new ArrayList<>() : new ArrayList<>(livro.getAutores());
+        for (Autor autorAtual : autoresAtuais) {
+            autorAtual.getLivros().removeIf(l -> Objects.equals(l.getId(), livro.getId()));
+            autorRepository.save(autorAtual);
+        }
 
         List<Autor> novosAutores = new ArrayList<>();
 
@@ -144,13 +184,21 @@ public class AluguelService {
         } else if (dto.getAutores() != null && !dto.getAutores().isEmpty()) {
             for (AutorDTO autorDTO : dto.getAutores()) {
                 Autor autor = autorMapper.toEntity(autorDTO);
-                autorRepository.save(autor);
-                novosAutores.add(autor);
+                Autor salvoAutor = autorRepository.save(autor);
+                novosAutores.add(salvoAutor);
             }
         }
 
         livro.setAutores(novosAutores);
         Livro atualizado = livroRepository.save(livro);
+
+        for (Autor novo : novosAutores) {
+            if (novo.getLivros() == null) novo.setLivros(new ArrayList<>());
+            if (novo.getLivros().stream().noneMatch(l -> Objects.equals(l.getId(), atualizado.getId()))) {
+                novo.getLivros().add(atualizado);
+                autorRepository.save(novo);
+            }
+        }
 
         return livroMapper.toDto(atualizado);
     }
@@ -158,17 +206,36 @@ public class AluguelService {
     public void deletarLivro(Long id) {
         Livro livro = livroRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Livro não encontrado"));
+
+        if (livro.getAlugueis() != null && livro.getAlugueis().stream().anyMatch(a -> a.getDataDevolucao() == null)) {
+            throw new IllegalStateException("Livro possui aluguel em aberto e não pode ser deletado.");
+        }
+
         if (livro.getAutores() != null) {
             for (Autor autor : new ArrayList<>(livro.getAutores())) {
-                autor.getLivros().remove(livro);
+                autor.getLivros().removeIf(l -> Objects.equals(l.getId(), livro.getId()));
                 autorRepository.save(autor);
             }
         }
+
         livroRepository.delete(livro);
     }
 
     public LocatarioDTO criarLocatario(LocatarioDTO dto) {
         Locatario locatario = locatarioMapper.toEntity(dto);
+        Locatario salvo = locatarioRepository.save(locatario);
+        return locatarioMapper.toDto(salvo);
+    }
+
+    public LocatarioDTO atualizarLocatario(Long id, LocatarioDTO dto) {
+        Locatario locatario = locatarioRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Locatário não encontrado"));
+        locatario.setNome(dto.getNome());
+        locatario.setSexo(dto.getSexo());
+        locatario.setTelefone(dto.getTelefone());
+        locatario.setEmail(dto.getEmail());
+        locatario.setDataNascimento(dto.getDataNascimento());
+        locatario.setCpf(dto.getCpf());
         Locatario salvo = locatarioRepository.save(locatario);
         return locatarioMapper.toDto(salvo);
     }
@@ -182,6 +249,11 @@ public class AluguelService {
     public void deletarLocatario(Long id) {
         Locatario locatario = locatarioRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Locatário não encontrado"));
+
+        if (locatario.getAlugueis() != null && locatario.getAlugueis().stream().anyMatch(a -> a.getDataDevolucao() == null)) {
+            throw new IllegalStateException("Locatário possui livros para devolução e não pode ser deletado.");
+        }
+
         locatarioRepository.delete(locatario);
     }
 
@@ -208,14 +280,12 @@ public class AluguelService {
         aluguel.setLocatario(locatario);
         aluguel.setDataRetirada(dataRetirada);
 
-        // ✅ Regra: devolução automática dois dias após a retirada
         aluguel.setDataDevolucao(dataRetirada.plusDays(2));
 
         for (LivroDTO livroDTO : dto.getLivros()) {
             Livro livro = livroRepository.findById(livroDTO.getId())
                     .orElseThrow(() -> new EntityNotFoundException("Livro não encontrado com ID: " + livroDTO.getId()));
-
-            aluguel.emprestarLivro(livro);
+            aluguel.emprestarLivro(livro); // valida disponibilidade e marca indisponível
             livroRepository.save(livro);
         }
 
@@ -236,7 +306,7 @@ public class AluguelService {
         aluguel.setDataDevolucao(LocalDate.now());
 
         for (Livro livro : aluguel.getLivros()) {
-            livro.setDisponivel(true); // ✅ Devolve o livro
+            livro.setDisponivel(true); // Devolve o livro
             livroRepository.save(livro);
         }
 
