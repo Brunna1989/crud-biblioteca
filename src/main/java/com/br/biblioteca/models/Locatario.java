@@ -1,4 +1,4 @@
-package com.br.biblioteca.model;
+package com.br.biblioteca.models;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;

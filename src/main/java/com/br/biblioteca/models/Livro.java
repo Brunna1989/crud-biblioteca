@@ -1,4 +1,4 @@
-package com.br.biblioteca.model;
+package com.br.biblioteca.models;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -35,6 +35,9 @@ public class Livro {
 
     @NotNull
     private LocalDate dataPublicacao;
+
+    @NotNull
+    private boolean alugado = false;
 
     @ManyToMany
     @JoinTable(

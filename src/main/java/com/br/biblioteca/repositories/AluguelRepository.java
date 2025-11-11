@@ -1,6 +1,6 @@
 package com.br.biblioteca.repositories;
 
-import com.br.biblioteca.model.Aluguel;
+import com.br.biblioteca.models.Aluguel;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
