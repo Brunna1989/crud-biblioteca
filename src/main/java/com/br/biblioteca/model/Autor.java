@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Data
@@ -36,6 +37,5 @@ public class Autor {
     private String cpf;
 
     @ManyToMany(mappedBy = "autores")
-    private Livro<Livro> livros = new ArrayList<>();
-
+    private List<Livro> livros = new ArrayList<>();
 }

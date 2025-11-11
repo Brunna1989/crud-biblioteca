@@ -1,6 +1,5 @@
 package com.br.biblioteca.model;
 
-import com.br.biblioteca.Aluguel;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
