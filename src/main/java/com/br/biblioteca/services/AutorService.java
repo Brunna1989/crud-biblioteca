@@ -14,8 +14,12 @@ public class AutorService {
 
     private final AutorRepository autorRepository;
 
-    private Autor salvarAutor(Autor autor){
-        return autorRepository.save(autor);
+    public Autor salvarAutor(Autor autor) {
+        try {
+            return autorRepository.save(autor);
+        } catch (Exception e) {
+            throw new AutorException("Erro ao salvar o autor: " + e.getMessage());
+        }
     }
 
     public List<Autor> listarTodosAutores(){
@@ -33,6 +37,20 @@ public class AutorService {
             return autores.get(0);
         } else {
             throw new AutorException(" Nenhum autor encontrado com o nome: " + nome);
+        }
+    }
+
+    public void deletarAutor(Long id) {
+        Autor autor = buscarAutorPorId(id);
+
+        if (autor.getLivros() != null && !autor.getLivros().isEmpty()) {
+            throw new AutorException("Autor não pode ser excluído, pois possui livros associados.");
+        }
+
+        try {
+            autorRepository.delete(autor);
+        } catch (Exception e) {
+            throw new AutorException("Erro ao excluir o autor: " + e.getMessage());
         }
     }
 }
