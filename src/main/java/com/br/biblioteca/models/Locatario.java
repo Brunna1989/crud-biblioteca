@@ -45,4 +45,3 @@ public class Locatario {
 }
 
 
-// criação de endpoints para listar locatarios e buscar locatario por id

@@ -35,7 +35,9 @@ public class AluguelService {
                 .orElseThrow(() -> new AluguelException("Locatário não encontrado."));
 
         aluguel.setLocatario(locatario);
-        aluguel.setDataDevolucao(LocalDate.now().plusDays(2)); // devolução padrão em 2 dias
+        aluguel.setDataDevolucao(LocalDate.now().plusDays(2));
+
+        List<Aluguel> alugueisAtuais = aluguelRepository.findByLocatario_Id(locatario.getId());
 
         for (Livro livro : aluguel.getLivros()) {
             Livro livroExistente = livroRepository.findById(livro.getId())
@@ -43,6 +45,16 @@ public class AluguelService {
 
             if (livroExistente.isAlugado()) {
                 throw new LivroException("O livro '" + livroExistente.getNome() + "' já está alugado.");
+            }
+
+            boolean jaAlugouMesmoLivro = alugueisAtuais.stream()
+                    .anyMatch(a -> a.getLivros().stream()
+                            .anyMatch(l -> l.getId().equals(livroExistente.getId()))
+                            && a.getDataDevolucao().isAfter(LocalDate.now()));
+
+            if (jaAlugouMesmoLivro) {
+                throw new AluguelException("O locatário '" + locatario.getNome() +
+                        "' já possui o livro '" + livroExistente.getNome() + "' alugado e ainda não devolvido.");
             }
 
             livroExistente.setAlugado(true);
