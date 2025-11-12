@@ -43,3 +43,6 @@ public class Locatario {
     @OneToMany(mappedBy = "locatario")
     private List<Aluguel> alugueis = new ArrayList<>();
 }
+
+
+// criação de endpoints para listar locatarios e buscar locatario por id
