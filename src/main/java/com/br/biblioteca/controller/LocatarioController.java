@@ -21,4 +21,6 @@ public class LocatarioController {
         Locatario novoLocatario = locatarioService.salvar(locatario);
         return ResponseEntity.ok(novoLocatario);
     }
+
+
 }
