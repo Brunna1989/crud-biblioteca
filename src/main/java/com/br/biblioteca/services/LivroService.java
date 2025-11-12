@@ -86,15 +86,13 @@ public class LivroService {
         }
     }
 
-    public List<Livro> buscarPorAutor(Long autorId) {
+    public List<Livro> buscarLivroPorAutor(Long autorId) {
         try {
             return livroRepository.findByAutores_Id(autorId);
         } catch (Exception e) {
             throw new LivroException("Erro ao buscar livros do autor: " + e.getMessage());
         }
     }
-
-
 }
 
 
