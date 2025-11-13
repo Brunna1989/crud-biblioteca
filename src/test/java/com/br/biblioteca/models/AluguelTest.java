@@ -124,4 +124,50 @@ public class AluguelTest {
         assertEquals(LocalDate.now().plusDays(2), aluguel.getDataDevolucao(),
                 "A data padrão deve ser hoje + 2 dias");
     }
+
+    @Test
+    void deveDiferenciarAlugueisComIdsDiferentes() {
+        Aluguel aluguel1 = new Aluguel();
+        aluguel1.setId(1L);
+
+        Aluguel aluguel2 = new Aluguel();
+        aluguel2.setId(2L);
+
+        assertNotEquals(aluguel1, aluguel2);
+        assertNotEquals(aluguel1.hashCode(), aluguel2.hashCode());
+    }
+
+    @Test
+    void deveManterRelacionamentoBidirecionalComLivros() {
+        Livro livro = new Livro();
+        livro.setId(3L);
+        livro.setNome("Clean Architecture");
+
+        Aluguel aluguel = new Aluguel();
+        aluguel.setId(5L);
+
+        aluguel.getLivros().add(livro);
+        livro.getAlugueis().add(aluguel);
+
+        assertTrue(aluguel.getLivros().contains(livro));
+        assertTrue(livro.getAlugueis().contains(aluguel));
+    }
+
+    @Test
+    void devePermitirVariosLivrosEmUmUnicoAluguel() {
+        Livro l1 = new Livro();
+        l1.setNome("Effective Java");
+        Livro l2 = new Livro();
+        l2.setNome("Refactoring");
+        Livro l3 = new Livro();
+        l3.setNome("Design Patterns");
+
+        Aluguel aluguel = new Aluguel();
+        aluguel.getLivros().add(l1);
+        aluguel.getLivros().add(l2);
+        aluguel.getLivros().add(l3);
+
+        assertEquals(3, aluguel.getLivros().size());
+    }
+
 }
