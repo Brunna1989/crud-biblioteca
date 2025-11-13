@@ -1,315 +1,107 @@
 package com.br.biblioteca.services;
 
-import com.br.biblioteca.dtos.*;
-import com.br.biblioteca.entities.*;
-import com.br.biblioteca.mappers.*;
-import com.br.biblioteca.repositories.*;
-import jakarta.persistence.EntityNotFoundException;
+import com.br.biblioteca.exceptions.AluguelException;
+import com.br.biblioteca.exceptions.LivroException;
+import com.br.biblioteca.models.Aluguel;
+import com.br.biblioteca.models.Livro;
+import com.br.biblioteca.models.Locatario;
+import com.br.biblioteca.repositories.AluguelRepository;
+import com.br.biblioteca.repositories.LivroRepository;
+import com.br.biblioteca.repositories.LocatarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class AluguelService {
 
-    private final AutorRepository autorRepository;
+    private final AluguelRepository aluguelRepository;
     private final LivroRepository livroRepository;
     private final LocatarioRepository locatarioRepository;
-    private final AluguelRepository aluguelRepository;
 
-    private final AutorMapper autorMapper;
-    private final LivroMapper livroMapper;
-    private final LocatarioMapper locatarioMapper;
-    private final AluguelMapper aluguelMapper;
-
-    public AutorDTO criarAutor(AutorDTO dto) {
-        Autor autor = autorMapper.toEntity(dto);
-        Autor salvo = autorRepository.save(autor);
-        return autorMapper.toDto(salvo);
-    }
-
-    public AutorDTO atualizarAutor(Long id, AutorDTO dto) {
-        Autor autor = autorRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Autor não encontrado"));
-        autor.setNome(dto.getNome());
-        autor.setSexo(dto.getSexo());
-        autor.setAnoNascimento(dto.getAnoNascimento());
-        autor.setCpf(dto.getCpf());
-        Autor salvo = autorRepository.save(autor);
-        return autorMapper.toDto(salvo);
-    }
-
-    public List<AutorDTO> listarAutores() {
-        return autorRepository.findAll().stream()
-                .map(autorMapper::toDto)
-                .collect(Collectors.toList());
-    }
-
-    public AutorDTO buscarAutorPorNome(String nome) {
-        Autor autor = autorRepository.findAll().stream()
-                .filter(a -> a.getNome().equalsIgnoreCase(nome))
-                .findFirst()
-                .orElseThrow(() -> new EntityNotFoundException("Autor não encontrado com nome: " + nome));
-        return autorMapper.toDto(autor);
-    }
-
-    public AutorDTO buscarAutorPorNomeParam(String nome) {
-        return buscarAutorPorNome(nome);
-    }
-
-    public void deletarAutor(Long id) {
-        Autor autor = autorRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Autor não encontrado"));
-        if (autor.getLivros() != null && !autor.getLivros().isEmpty()) {
-            throw new IllegalStateException("Autor possui livros associados e não pode ser deletado.");
-        }
-        autorRepository.delete(autor);
-    }
-
-    public LivroDTO criarLivroComNovosAutores(LivroDTO dto) {
-        Livro livro = livroMapper.toEntity(dto);
-        livro.setDisponivel(true);
-        livro.setAutores(new ArrayList<>());
-
-        if (dto.getAutoresIds() != null && !dto.getAutoresIds().isEmpty()) {
-            for (Long autorId : dto.getAutoresIds()) {
-                Autor autor = autorRepository.findById(autorId)
-                        .orElseThrow(() -> new EntityNotFoundException("Autor não encontrado com ID: " + autorId));
-                livro.getAutores().add(autor);
-            }
-        } else {
-            throw new IllegalArgumentException("Informe os autoresIds de autores já cadastrados antes de criar o livro.");
+    public Aluguel salvar(Aluguel aluguel) {
+        if (aluguel.getLocatario() == null || aluguel.getLocatario().getId() == null) {
+            throw new AluguelException("É necessário informar um locatário válido para o aluguel.");
         }
 
-        Livro salvo = livroRepository.save(livro);
-        for (Autor autor : salvo.getAutores()) {
-            if (autor.getLivros() == null) {
-                autor.setLivros(new ArrayList<>());
-            }
-            if (!autor.getLivros().contains(salvo)) {
-                autor.getLivros().add(salvo);
-                autorRepository.save(autor);
-            }
+        if (aluguel.getLivros() == null || aluguel.getLivros().isEmpty()) {
+            throw new AluguelException("O aluguel deve conter ao menos um livro.");
         }
 
-        return livroMapper.toDto(salvo);
-    }
+        Locatario locatario = locatarioRepository.findById(aluguel.getLocatario().getId())
+                .orElseThrow(() -> new AluguelException("Locatário não encontrado."));
 
-    public LivroDTO buscarLivroPorId(Long id) {
-        Livro livro = livroRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Livro não encontrado"));
-        return livroMapper.toDto(livro);
-    }
-
-    public List<LivroDTO> listarLivros() {
-        return livroRepository.findAll().stream()
-                .map(livroMapper::toDto)
-                .collect(Collectors.toList());
-    }
-
-    public List<LivroDTO> listarLivrosDisponiveis() {
-        List<Livro> disponiveis = livroRepository.findAll().stream()
-                .filter(livro -> livro.getAlugueis() == null ||
-                        livro.getAlugueis().stream().allMatch(a -> a.getDataDevolucao() != null))
-                .collect(Collectors.toList());
-        return disponiveis.stream().map(livroMapper::toDto).collect(Collectors.toList());
-    }
-
-    public List<LivroDTO> listarLivrosAlugados() {
-        List<Livro> alugados = livroRepository.findAll().stream()
-                .filter(livro -> livro.getAlugueis() != null &&
-                        livro.getAlugueis().stream().anyMatch(a -> a.getDataDevolucao() == null))
-                .collect(Collectors.toList());
-        return alugados.stream().map(livroMapper::toDto).collect(Collectors.toList());
-    }
-
-    public List<LivroDTO> listarLivrosPorAutor(String nomeAutor) {
-        Autor autor = autorRepository.findAll().stream()
-                .filter(a -> a.getNome().equalsIgnoreCase(nomeAutor))
-                .findFirst()
-                .orElseThrow(() -> new EntityNotFoundException("Autor não encontrado"));
-        return autor.getLivros().stream()
-                .map(livroMapper::toDto)
-                .collect(Collectors.toList());
-    }
-
-     public List<LivroDTO> buscarLivrosPorNomeOuDisponibilidade(String nome, Boolean disponivel) {
-        return livroRepository.findAll().stream()
-                .filter(l -> {
-                    boolean okNome = true;
-                    boolean okDisp = true;
-                    if (nome != null && !nome.isBlank()) {
-                        okNome = l.getNome() != null && l.getNome().toLowerCase().contains(nome.toLowerCase());
-                    }
-                    if (disponivel != null) {
-                        // usa getAlugueis para verificar disponibilidade real
-                        boolean atualDisponivel = l.getAlugueis() == null ||
-                                l.getAlugueis().stream().allMatch(a -> a.getDataDevolucao() != null);
-                        okDisp = (disponivel.equals(atualDisponivel));
-                    }
-                    return okNome && okDisp;
-                })
-                .map(livroMapper::toDto)
-                .collect(Collectors.toList());
-    }
-
-    public LivroDTO atualizarLivro(Long id, LivroDTO dto) {
-        Livro livro = livroRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Livro não encontrado"));
-
-        livro.setNome(dto.getNome());
-        livro.setIsbn(dto.getIsbn());
-        livro.setDataPublicacao(dto.getDataPublicacao());
-
-        List<Autor> autoresAtuais = livro.getAutores() == null ? new ArrayList<>() : new ArrayList<>(livro.getAutores());
-        for (Autor autorAtual : autoresAtuais) {
-            autorAtual.getLivros().removeIf(l -> Objects.equals(l.getId(), livro.getId()));
-            autorRepository.save(autorAtual);
-        }
-
-        List<Autor> novosAutores = new ArrayList<>();
-
-        if (dto.getAutoresIds() != null && !dto.getAutoresIds().isEmpty()) {
-            for (Long autorId : dto.getAutoresIds()) {
-                Autor autor = autorRepository.findById(autorId)
-                        .orElseThrow(() -> new EntityNotFoundException("Autor não encontrado com ID: " + autorId));
-                novosAutores.add(autor);
-            }
-        } else if (dto.getAutores() != null && !dto.getAutores().isEmpty()) {
-            for (AutorDTO autorDTO : dto.getAutores()) {
-                Autor autor = autorMapper.toEntity(autorDTO);
-                Autor salvoAutor = autorRepository.save(autor);
-                novosAutores.add(salvoAutor);
-            }
-        }
-
-        livro.setAutores(novosAutores);
-        Livro atualizado = livroRepository.save(livro);
-
-        for (Autor novo : novosAutores) {
-            if (novo.getLivros() == null) novo.setLivros(new ArrayList<>());
-            if (novo.getLivros().stream().noneMatch(l -> Objects.equals(l.getId(), atualizado.getId()))) {
-                novo.getLivros().add(atualizado);
-                autorRepository.save(novo);
-            }
-        }
-
-        return livroMapper.toDto(atualizado);
-    }
-
-    public void deletarLivro(Long id) {
-        Livro livro = livroRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Livro não encontrado"));
-
-        if (livro.getAlugueis() != null && livro.getAlugueis().stream().anyMatch(a -> a.getDataDevolucao() == null)) {
-            throw new IllegalStateException("Livro possui aluguel em aberto e não pode ser deletado.");
-        }
-
-        if (livro.getAutores() != null) {
-            for (Autor autor : new ArrayList<>(livro.getAutores())) {
-                autor.getLivros().removeIf(l -> Objects.equals(l.getId(), livro.getId()));
-                autorRepository.save(autor);
-            }
-        }
-
-        livroRepository.delete(livro);
-    }
-
-    public LocatarioDTO criarLocatario(LocatarioDTO dto) {
-        Locatario locatario = locatarioMapper.toEntity(dto);
-        Locatario salvo = locatarioRepository.save(locatario);
-        return locatarioMapper.toDto(salvo);
-    }
-
-    public LocatarioDTO atualizarLocatario(Long id, LocatarioDTO dto) {
-        Locatario locatario = locatarioRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Locatário não encontrado"));
-        locatario.setNome(dto.getNome());
-        locatario.setSexo(dto.getSexo());
-        locatario.setTelefone(dto.getTelefone());
-        locatario.setEmail(dto.getEmail());
-        locatario.setDataNascimento(dto.getDataNascimento());
-        locatario.setCpf(dto.getCpf());
-        Locatario salvo = locatarioRepository.save(locatario);
-        return locatarioMapper.toDto(salvo);
-    }
-
-    public List<LocatarioDTO> listarLocatarios() {
-        return locatarioRepository.findAll().stream()
-                .map(locatarioMapper::toDto)
-                .collect(Collectors.toList());
-    }
-
-    public void deletarLocatario(Long id) {
-        Locatario locatario = locatarioRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Locatário não encontrado"));
-
-        if (locatario.getAlugueis() != null && locatario.getAlugueis().stream().anyMatch(a -> a.getDataDevolucao() == null)) {
-            throw new IllegalStateException("Locatário possui livros para devolução e não pode ser deletado.");
-        }
-
-        locatarioRepository.delete(locatario);
-    }
-
-    public List<LivroDTO> listarLivrosPorLocatario(Long locatarioId) {
-        Locatario loc = locatarioRepository.findById(locatarioId)
-                .orElseThrow(() -> new EntityNotFoundException("Locatário não encontrado"));
-        return loc.getAlugueis().stream()
-                .flatMap(a -> a.getLivros().stream())
-                .distinct()
-                .map(livroMapper::toDto)
-                .collect(Collectors.toList());
-    }
-
-    public AluguelDTO criarAluguel(AluguelDTO dto) {
-        if (dto.getLivros() == null || dto.getLivros().isEmpty()) {
-            throw new IllegalArgumentException("É necessário informar ao menos um livro para o aluguel.");
-        }
-
-        Locatario locatario = locatarioRepository.findById(dto.getLocatarioId())
-                .orElseThrow(() -> new EntityNotFoundException("Locatário não encontrado"));
-
-        Aluguel aluguel = new Aluguel();
-        LocalDate dataRetirada = dto.getDataRetirada() != null ? dto.getDataRetirada() : LocalDate.now();
         aluguel.setLocatario(locatario);
-        aluguel.setDataRetirada(dataRetirada);
+        aluguel.setDataDevolucao(LocalDate.now().plusDays(2));
 
-        aluguel.setDataDevolucao(dataRetirada.plusDays(2));
-
-        for (LivroDTO livroDTO : dto.getLivros()) {
-            Livro livro = livroRepository.findById(livroDTO.getId())
-                    .orElseThrow(() -> new EntityNotFoundException("Livro não encontrado com ID: " + livroDTO.getId()));
-            aluguel.emprestarLivro(livro); // valida disponibilidade e marca indisponível
-            livroRepository.save(livro);
-        }
-
-        Aluguel salvo = aluguelRepository.save(aluguel);
-        return aluguelMapper.toDto(salvo);
-    }
-
-    public List<AluguelDTO> listarAlugueis() {
-        return aluguelRepository.findAll().stream()
-                .map(aluguelMapper::toDto)
-                .collect(Collectors.toList());
-    }
-
-    public void finalizarAluguel(Long id) {
-        Aluguel aluguel = aluguelRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Aluguel não encontrado"));
-
-        aluguel.setDataDevolucao(LocalDate.now());
+        List<Aluguel> alugueisAtuais = aluguelRepository.findByLocatario_Id(locatario.getId());
 
         for (Livro livro : aluguel.getLivros()) {
-            livro.setDisponivel(true); // Devolve o livro
+            Livro livroExistente = livroRepository.findById(livro.getId())
+                    .orElseThrow(() -> new LivroException("Livro com ID " + livro.getId() + " não encontrado."));
+
+            if (livroExistente.isAlugado()) {
+                throw new LivroException("O livro '" + livroExistente.getNome() + "' já está alugado.");
+            }
+
+            boolean jaAlugouMesmoLivro = alugueisAtuais.stream()
+                    .anyMatch(a -> a.getLivros().stream()
+                            .anyMatch(l -> l.getId().equals(livroExistente.getId()))
+                            && a.getDataDevolucao().isAfter(LocalDate.now()));
+
+            if (jaAlugouMesmoLivro) {
+                throw new AluguelException("O locatário '" + locatario.getNome() +
+                        "' já possui o livro '" + livroExistente.getNome() + "' alugado e ainda não devolvido.");
+            }
+
+            livroExistente.setAlugado(true);
+            livroRepository.save(livroExistente);
+        }
+
+        return aluguelRepository.save(aluguel);
+    }
+
+    public List<Aluguel> listarTodos() {
+        return aluguelRepository.findAll();
+    }
+
+    public Aluguel buscarPorId(Long id) {
+        return aluguelRepository.findById(id)
+                .orElseThrow(() -> new AluguelException("Aluguel com ID " + id + " não encontrado."));
+    }
+
+    public List<Aluguel> listarPorLocatario(Long locatarioId) {
+        if (!locatarioRepository.existsById(locatarioId)) {
+            throw new AluguelException("Locatário com ID " + locatarioId + " não encontrado.");
+        }
+
+        return aluguelRepository.findByLocatario_Id(locatarioId);
+    }
+
+    public Aluguel atualizar(Long id, Aluguel dadosAtualizados) {
+        Aluguel existente = buscarPorId(id);
+
+        if (dadosAtualizados.getLivros() == null || dadosAtualizados.getLivros().isEmpty()) {
+            throw new AluguelException("O aluguel deve conter ao menos um livro.");
+        }
+
+        existente.setLivros(dadosAtualizados.getLivros());
+        existente.setDataDevolucao(dadosAtualizados.getDataDevolucao());
+
+        return aluguelRepository.save(existente);
+    }
+
+    public void deletar(Long id) {
+        Aluguel aluguel = buscarPorId(id);
+
+        for (Livro livro : aluguel.getLivros()) {
+            livro.setAlugado(false);
             livroRepository.save(livro);
         }
 
-        aluguelRepository.save(aluguel);
+        aluguelRepository.delete(aluguel);
     }
 }

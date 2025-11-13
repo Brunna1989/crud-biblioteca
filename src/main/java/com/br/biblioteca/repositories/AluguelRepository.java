@@ -1,13 +1,12 @@
 package com.br.biblioteca.repositories;
 
-import com.br.biblioteca.entities.Aluguel;
+import com.br.biblioteca.models.Aluguel;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
-public interface AluguelRepository extends JpaRepository<Aluguel,Long> {
-
-
-
-
+public interface AluguelRepository extends JpaRepository<Aluguel, Long> {
+    List<Aluguel> findByLocatario_Id(Long locatarioId);
 }

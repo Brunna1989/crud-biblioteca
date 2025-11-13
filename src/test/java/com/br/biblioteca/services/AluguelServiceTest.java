@@ -1,242 +1,119 @@
 package com.br.biblioteca.services;
 
-import com.br.biblioteca.dtos.*;
-import com.br.biblioteca.entities.*;
-import com.br.biblioteca.mappers.*;
-import com.br.biblioteca.repositories.*;
-import jakarta.persistence.EntityNotFoundException;
+import com.br.biblioteca.exceptions.AutorException;
+import com.br.biblioteca.models.Autor;
+import com.br.biblioteca.repositories.AutorRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
-import java.time.LocalDate;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class AluguelServiceTest {
 
+    @Mock
+    private AutorRepository autorRepository;
+
     @InjectMocks
-    private AluguelService aluguelService;
-
-    @Mock private AutorRepository autorRepository;
-    @Mock private LivroRepository livroRepository;
-    @Mock private LocatarioRepository locatarioRepository;
-    @Mock private AluguelRepository aluguelRepository;
-
-    @Mock private AutorMapper autorMapper;
-    @Mock private LivroMapper livroMapper;
-    @Mock private LocatarioMapper locatarioMapper;
-    @Mock private AluguelMapper aluguelMapper;
+    private AutorService autorService;
 
     private Autor autor;
-    private AutorDTO autorDTO;
-    private Livro livro;
-    private LivroDTO livroDTO;
-    private Locatario locatario;
-    private LocatarioDTO locatarioDTO;
-    private Aluguel aluguel;
-    private AluguelDTO aluguelDTO;
 
     @BeforeEach
-    void setup() {
+    void setUp() {
         MockitoAnnotations.openMocks(this);
-
         autor = Autor.builder()
                 .id(1L)
                 .nome("Machado de Assis")
-                .cpf("12345678900")
-                .sexo("M")
-                .anoNascimento(1839)
-                .livros(new ArrayList<>())
-                .build();
-
-        autorDTO = AutorDTO.builder()
-                .id(1L)
-                .nome("Machado de Assis")
-                .cpf("12345678900")
-                .sexo("M")
-                .anoNascimento(1839)
-                .build();
-
-        livro = Livro.builder()
-                .id(1L)
-                .nome("Dom Casmurro")
-                .isbn("9788572327427")
-                .dataPublicacao(LocalDate.of(1899, 1, 1))
-                .autores(List.of(autor))
-                .isDisponivel(true)
-                .alugueis(new ArrayList<>())
-                .build();
-
-        livroDTO = LivroDTO.builder()
-                .id(1L)
-                .nome("Dom Casmurro")
-                .isbn("9788572327427")
-                .dataPublicacao(LocalDate.of(1899, 1, 1))
-                .disponivel(true)
-                .autores(List.of(autorDTO))
-                .autoresIds(List.of(1L))
-                .build();
-
-        locatario = Locatario.builder()
-                .id(1L)
-                .nome("João Silva")
-                .cpf("98765432100")
-                .email("joao@email.com")
-                .telefone("123456789")
-                .dataNascimento(LocalDate.of(1990, 1, 1))
-                .alugueis(new ArrayList<>())
-                .build();
-
-        locatarioDTO = LocatarioDTO.builder()
-                .id(1L)
-                .nome("João Silva")
-                .cpf("98765432100")
-                .email("joao@email.com")
-                .telefone("123456789")
-                .dataNascimento(LocalDate.of(1990, 1, 1))
-                .build();
-
-        aluguel = Aluguel.builder()
-                .id(1L)
-                .locatario(locatario)
-                .livros(new ArrayList<>(List.of(livro)))
-                .dataRetirada(LocalDate.now())
-                .dataDevolucao(null)
-                .build();
-
-        aluguelDTO = AluguelDTO.builder()
-                .id(1L)
-                .locatarioId(1L)
-                .livros(List.of(livroDTO))
-                .dataRetirada(LocalDate.now())
-                .dataDevolucao(null)
+                .sexo("Masculino")
+                .anoNascimento("1839")
+                .cpf("12345678901")
                 .build();
     }
 
     @Test
-    void deveCriarAutorComSucesso() {
-        when(autorMapper.toEntity(autorDTO)).thenReturn(autor);
-        when(autorRepository.save(any())).thenReturn(autor);
-        when(autorMapper.toDto(autor)).thenReturn(autorDTO);
-
-        AutorDTO result = aluguelService.criarAutor(autorDTO);
-
-        assertNotNull(result);
-        assertEquals("Machado de Assis", result.getNome());
-        verify(autorRepository, times(1)).save(any());
+    void deveSalvarAutorComSucesso() {
+        when(autorRepository.save(autor)).thenReturn(autor);
+        Autor resultado = autorService.salvarAutor(autor);
+        assertEquals(autor, resultado);
+        verify(autorRepository).save(autor);
     }
 
     @Test
-    void deveAtualizarAutorExistente() {
+    void deveLancarExcecaoAoSalvarAutor() {
+        when(autorRepository.save(autor)).thenThrow(new RuntimeException("Erro de banco"));
+        AutorException ex = assertThrows(AutorException.class, () -> autorService.salvarAutor(autor));
+        assertTrue(ex.getMessage().contains("Erro ao salvar o autor"));
+    }
+
+    @Test
+    void deveListarTodosAutores() {
+        when(autorRepository.findAll()).thenReturn(List.of(autor));
+        List<Autor> lista = autorService.listarTodosAutores();
+        assertEquals(1, lista.size());
+        assertEquals("Machado de Assis", lista.get(0).getNome());
+        verify(autorRepository).findAll();
+    }
+
+    @Test
+    void deveBuscarAutorPorIdComSucesso() {
         when(autorRepository.findById(1L)).thenReturn(Optional.of(autor));
-        when(autorRepository.save(any())).thenReturn(autor);
-        when(autorMapper.toDto(autor)).thenReturn(autorDTO);
-
-        AutorDTO result = aluguelService.atualizarAutor(1L, autorDTO);
-
-        assertEquals("Machado de Assis", result.getNome());
+        Autor resultado = autorService.buscarAutorPorId(1L);
+        assertEquals(autor, resultado);
+        verify(autorRepository).findById(1L);
     }
 
     @Test
-    void deveLancarExcecaoAoAtualizarAutorNaoExistente() {
+    void deveLancarExcecaoQuandoAutorNaoEncontradoPorId() {
         when(autorRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(EntityNotFoundException.class, () ->
-                aluguelService.atualizarAutor(99L, autorDTO));
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> autorService.buscarAutorPorId(99L));
+        assertTrue(ex.getMessage().contains("Autor com ID 99 não encontrado"));
     }
 
     @Test
-    void deveCriarLivroComSucesso() {
-        when(livroMapper.toEntity(livroDTO)).thenReturn(livro);
+    void deveBuscarAutorPorNomeComSucesso() {
+        when(autorRepository.findByNomeContainingIgnoreCase("machado")).thenReturn(List.of(autor));
+        Autor resultado = autorService.buscaAutorPorNome("machado");
+        assertEquals(autor, resultado);
+        verify(autorRepository).findByNomeContainingIgnoreCase("machado");
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoAutorNaoEncontradoPorNome() {
+        when(autorRepository.findByNomeContainingIgnoreCase("desconhecido")).thenReturn(Collections.emptyList());
+        AutorException ex = assertThrows(AutorException.class, () -> autorService.buscaAutorPorNome("desconhecido"));
+        assertTrue(ex.getMessage().contains("Nenhum autor encontrado"));
+    }
+
+    @Test
+    void deveDeletarAutorComSucesso() {
         when(autorRepository.findById(1L)).thenReturn(Optional.of(autor));
-        when(livroRepository.save(any())).thenReturn(livro);
-        when(livroMapper.toDto(livro)).thenReturn(livroDTO);
-
-        LivroDTO result = aluguelService.criarLivroComNovosAutores(livroDTO);
-
-        assertNotNull(result);
-        assertEquals("Dom Casmurro", result.getNome());
+        autor.setLivros(Collections.emptyList());
+        autorService.deletarAutor(1L);
+        verify(autorRepository).delete(autor);
     }
 
     @Test
-    void deveAtualizarLivroComSucesso() {
-        when(livroRepository.findById(1L)).thenReturn(Optional.of(livro));
+    void deveLancarExcecaoAoDeletarAutorComLivros() {
+        autor.setLivros(List.of(new com.br.biblioteca.models.Livro()));
         when(autorRepository.findById(1L)).thenReturn(Optional.of(autor));
-        when(livroRepository.save(any())).thenReturn(livro);
-        when(livroMapper.toDto(livro)).thenReturn(livroDTO);
-
-        LivroDTO result = aluguelService.atualizarLivro(1L, livroDTO);
-
-        assertNotNull(result);
-        assertEquals("Dom Casmurro", result.getNome());
+        AutorException ex = assertThrows(AutorException.class, () -> autorService.deletarAutor(1L));
+        assertTrue(ex.getMessage().contains("possui livros associados"));
     }
 
     @Test
-    void deveLancarExcecaoAoBuscarLivroInexistente() {
-        when(livroRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(EntityNotFoundException.class, () ->
-                aluguelService.buscarLivroPorId(99L));
-    }
-
-    @Test
-    void deveCriarLocatarioComSucesso() {
-        when(locatarioMapper.toEntity(locatarioDTO)).thenReturn(locatario);
-        when(locatarioRepository.save(any())).thenReturn(locatario);
-        when(locatarioMapper.toDto(locatario)).thenReturn(locatarioDTO);
-
-        LocatarioDTO result = aluguelService.criarLocatario(locatarioDTO);
-
-        assertNotNull(result);
-        assertEquals("João Silva", result.getNome());
-    }
-
-    @Test
-    void deveCriarAluguelComSucesso() {
-        livro.setDisponivel(true);
-        when(locatarioRepository.findById(1L)).thenReturn(Optional.of(locatario));
-        when(livroRepository.findById(1L)).thenReturn(Optional.of(livro));
-        when(aluguelRepository.save(any())).thenReturn(aluguel);
-        when(aluguelMapper.toDto(any())).thenReturn(aluguelDTO);
-
-        AluguelDTO result = aluguelService.criarAluguel(aluguelDTO);
-
-        assertNotNull(result);
-        assertEquals(1, result.getLivros().size());
-        assertFalse(livro.isDisponivel()); // livro agora está alugado
-    }
-
-    @Test
-    void deveLancarErroAoCriarAluguelSemLivros() {
-        AluguelDTO dtoSemLivros = AluguelDTO.builder()
-                .locatarioId(1L)
-                .livros(Collections.emptyList())
-                .build();
-
-        assertThrows(IllegalArgumentException.class, () ->
-                aluguelService.criarAluguel(dtoSemLivros));
-    }
-
-    @Test
-    void deveFinalizarAluguelComSucesso() {
-        livro.setDisponivel(false);
-        when(aluguelRepository.findById(1L)).thenReturn(Optional.of(aluguel));
-
-        aluguelService.finalizarAluguel(1L);
-
-        assertNotNull(aluguel.getDataDevolucao());
-        assertTrue(livro.isDisponivel());
-        verify(aluguelRepository, times(1)).save(aluguel);
-    }
-
-    @Test
-    void deveLancarErroAoFinalizarAluguelInexistente() {
-        when(aluguelRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThrows(EntityNotFoundException.class, () ->
-                aluguelService.finalizarAluguel(99L));
+    void deveLancarExcecaoAoFalharNaExclusao() {
+        when(autorRepository.findById(1L)).thenReturn(Optional.of(autor));
+        autor.setLivros(Collections.emptyList());
+        doThrow(new RuntimeException("Erro ao excluir")).when(autorRepository).delete(autor);
+        AutorException ex = assertThrows(AutorException.class, () -> autorService.deletarAutor(1L));
+        assertTrue(ex.getMessage().contains("Erro ao excluir o autor"));
     }
 }
