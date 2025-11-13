@@ -7,27 +7,95 @@ Permite cadastrar, atualizar, listar e remover entidades, além de controlar a d
 
 ## 🚀 Tecnologias Utilizadas
 - Java 17
-- Spring Boot
+- Spring Boot 3.5
 - Spring Data JPA
 - Lombok
 - MySQL
 - Maven
 - RESTful API
+- JUnit + MockMvc (testes)
 
 ---
 
-// Regras Gerais : O que deverá ser Implementado:
+## 🧱 Estrutura do Projeto
 
-| Requisito                                               | Implementado |
-| ------------------------------------------------------- | ------------ |
-| CRUD completo (POST, GET, PUT, DELETE)                  | ✅            |
-| Uso de `@RequestBody`, `@PathVariable`, `@RequestParam` | ✅            |
-| Cadastro de Livro, Autor, Locatário e Aluguel           | ✅            |
-| Listar livros disponíveis e alugados                    | ✅            |
-| Buscar Livro por ID                                     | ✅            |
-| Buscar Autor por nome                                   | ✅            |
-| Listar livros alugados por Locatário                    | ✅            |
-| Consultar livros de um Autor                            | ✅            |
-| Regras de exclusão (Livro, Autor, Locatário)            | ✅            |
+O projeto segue arquitetura em camadas:
+
+```src
+src/main/java/com/br/biblioteca
+│
+├── controller   → Endpoints REST
+├── models       → Entidades JPA
+├── repository   → Interfaces JPA
+├── services     → Regras de negócio
+└── exceptions   → Exceptions personalizadas
+````
+
+## ⚙️ Configurações de Banco de Dados
+✔️ MySQL (padrão da aplicação):
+
+Configurado em application.properties:
+
+Banco: biblioteca
+
+Usuário: root
+
+Senha: root123
+
+Tabelas são atualizadas automaticamente (sem apagar dados).
+
+## ▶️ Como Executar o Projeto:
+
+1️⃣ Pré-requisitos:
+
+Java 17 instalado
+
+Maven 3.8+
+
+MySQL em execução com o banco biblioteca criado:
+
+```sql
+CREATE DATABASE biblioteca;
+```
+
+## 2️⃣ Clonar o repositório:
+
+```bash
+git clone <URL_DO_REPOSITORIO>
+cd biblioteca
+```
+
+## 3️⃣ Rodar a aplicação:
+
+```bash
+mvn spring-boot:run
+```
+
+## 🧪 Executar os Testes
+
+Os testes utilizam MockMvc + H2, bastando executar:
+
+```bash
+mvn test
+```
+
+## 📌 Endpoints (exemplos):
+
+POST /api/locatarios
+
+GET /api/locatarios
+
+GET /api/locatarios/{id}
+
+PUT /api/locatarios/{id}
+
+DELETE /api/locatarios/{id}
+
+GET /api/locatarios/buscar?email=
 
 
+## 🧾 Licença
+
+Este projeto é de uso **livre para fins educacionais** e pode ser adaptado para outros contextos de gestão de acervos e locações.
+
+Desenvolvido com ❤️ em **Java** e **Spring Boot**.
